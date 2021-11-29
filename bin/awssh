@@ -1,7 +1,7 @@
 #!/bin/bash
 ECS_KEY="id_ed25519_prx_developer"
-PROD_CLUSTER="infrastructure-cd-root-production-ECSClusterStack-15WO4KWS6T73G-ECSCluster-1NE8F25OIN3J2"
-STAG_CLUSTER="infrastructure-cd-root-staging-ECSClusterStack-1PYSGW6HNNXL8-ECSCluster-1FUFTSWV85PLO"
+PROD_CLUSTER="infrastructure-cd-root-production-SharedEcsClusterStack-11IXC7OZI6I4U-EcsCluster-AJ4yJsOu3QDc"
+STAG_CLUSTER="infrastructure-cd-root-staging-SharedEcsClusterStack-1U7T895ADTHR9-EcsCluster-3TUHESV7htXa"
 
 export AWS_PROFILE=prx-legacy
 export AWS_DEFAULT_REGION=us-east-1
