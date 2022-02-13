@@ -16,19 +16,19 @@ jobs:
       - name: Update forumla file
         run: |
           tag=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
-          tag="v0.0.9"
+          tag="v0.0.4"
           sed -i "s/tags\/.*\.tar\.gz/tags\/$tag\.tar\.gz/" Formula/prx-dev-tools.rb
 
-          tag="v0.0.4"
           url="https://github.com/PRX/homebrew-dev-tools/archive/refs/tags/$tag.tar.gz"
           wget -O archive "$url"
           chk=$(sha256sum archive | awk '{print $1}')
+          rm archive
 
           sed -i "s/sha256.*$/sha256 \"$chk\"/" Formula/prx-dev-tools.rb
 
           git config user.name github-actions
           git config user.email github-actions@github.com
           git diff
-# git add .
-# git commit -m "generated"
-# git push
+          git add .
+          git commit -m "Update formula for release $tag"
+          git push
