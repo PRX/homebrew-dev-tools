@@ -19,7 +19,7 @@ jobs:
           tag="v0.0.9"
           sed -i "s/tags\/.*\.tar\.gz/tags\/$tag\.tar\.gz/" Formula/prx-dev-tools.rb
 
-          tag="v0.0.3"
+          tag="v0.0.4"
           url="https://github.com/PRX/homebrew-dev-tools/archive/refs/tags/$tag.tar.gz"
           wget -O archive "$url"
           chk=$(sha256sum archive | awk '{print $1}')
