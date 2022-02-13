@@ -14,10 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Update forumla file
-        # working-directory: Forumla
         run: |
           tag=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
-          sed -i Formula/prx-dev-tools.rb 's/tags\/.+\.tar\.gz/tags\/'"$tag"'\.tag\.gz/'
+          sed -i 's/tags\/.+\.tar\.gz/tags\/'"$tag"'\.tag\.gz/' Formula/prx-dev-tools.rb
           git config user.name github-actions
           git config user.email github-actions@github.com
           git diff
