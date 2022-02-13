@@ -16,12 +16,11 @@ jobs:
       - name: Update forumla file
         # working-directory: Forumla
         run: |
-          ls
-          echo $GITHUB_REF
-# sed -i
-# date > generated.txt
-# git config user.name github-actions
-# git config user.email github-actions@github.com
+          tag=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
+          sed -i Formula/prx-dev-tools.rb 's/tags\/.+\.tar\.gz/tags\/'"$tag"'\.tag\.gz/'
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git diff
 # git add .
 # git commit -m "generated"
 # git push
