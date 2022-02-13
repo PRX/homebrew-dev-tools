@@ -15,6 +15,7 @@ jobs:
           # Get the tag version (e.g., "v1.2.3") from the environment
           tag=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
 
+          git fetch
           git checkout main
 
           url="https://github.com/PRX/homebrew-dev-tools/archive/refs/tags/$tag.tar.gz"
