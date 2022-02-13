@@ -1,0 +1,26 @@
+name: Start CD pipeline execution
+
+on:
+  release:
+    types:
+      - published
+  push:
+    paths:
+      - .github/workflows/update-formula-on-release.yml
+
+jobs:
+  update_formula:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update forumla file
+        working-directory: Forumla
+        run: |
+          echo $GITHUB_REF
+# sed -i
+# date > generated.txt
+# git config user.name github-actions
+# git config user.email github-actions@github.com
+# git add .
+# git commit -m "generated"
+# git push
