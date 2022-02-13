@@ -19,10 +19,9 @@ jobs:
           tag="v0.0.9"
           echo $tag
           sed -i "s/tags\/.*\.tar\.gz/tags\/$tag\.tar\.gz/" Formula/prx-dev-tools.rb
-# sed -i -e 's/tags\/.+\.tar\.gz/tags\/'"$tag"'\.tag\.gz/' Formula/prx-dev-tools.rb
-# git config user.name github-actions
-# git config user.email github-actions@github.com
-# git diff
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git diff
 # git add .
 # git commit -m "generated"
 # git push
