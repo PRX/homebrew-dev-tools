@@ -16,6 +16,7 @@ jobs:
       - name: Update forumla file
         run: |
           tag=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
+          tag="v0.0.9"
           echo $tag
           sed -i "s/tags\/.*\.tar\.gz/tags\/$tag\.tar\.gz/" Formula/prx-dev-tools.rb
 # sed -i -e 's/tags\/.+\.tar\.gz/tags\/'"$tag"'\.tag\.gz/' Formula/prx-dev-tools.rb
