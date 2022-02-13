@@ -19,6 +19,10 @@ jobs:
           tag="v0.0.9"
           echo $tag
           sed -i "s/tags\/.*\.tar\.gz/tags\/$tag\.tar\.gz/" Formula/prx-dev-tools.rb
+
+          url="https://github.com/PRX/homebrew-dev-tools/archive/refs/tags/$tag.tar.gz"
+          wget "$url"
+
           git config user.name github-actions
           git config user.email github-actions@github.com
           git diff
