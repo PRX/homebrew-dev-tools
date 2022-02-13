@@ -14,8 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Update forumla file
-        working-directory: Forumla
+        # working-directory: Forumla
         run: |
+          ls
           echo $GITHUB_REF
 # sed -i
 # date > generated.txt
