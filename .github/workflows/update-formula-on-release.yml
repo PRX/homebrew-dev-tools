@@ -17,6 +17,7 @@ jobs:
         run: |
           tag=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
           echo $tag
+          sed -i "s/tags\/.*\.tar\.gz/tags\/$tag\.tar\.gz/" Formula/prx-dev-tools.rb
 # sed -i -e 's/tags\/.+\.tar\.gz/tags\/'"$tag"'\.tag\.gz/' Formula/prx-dev-tools.rb
 # git config user.name github-actions
 # git config user.email github-actions@github.com
