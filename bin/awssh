@@ -69,7 +69,7 @@ function ssh_to_ec2() {
     ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile /dev/null" -i ~/.ssh/$ECS_KEY ec2-user@${IP}
   else
     REAL_CMD="/bin/ash"
-    if [[ "$MATCH_NAME" == "sphinx" || "$MATCH_NAME" == "networks" || "$MATCH_NAME" == "exchange" ]]; then
+    if [[ "$MATCH_NAME" == "sphinx" || "$MATCH_NAME" == "networks" || "$MATCH_NAME" == "exchange" || "$MATCH_NAME" == "thecount" ]]; then
       REAL_CMD="/bin/bash"
     fi
     if [[ -n "$RUN_CMD" ]]; then
