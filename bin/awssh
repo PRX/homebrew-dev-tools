@@ -42,12 +42,12 @@ function ssh_to_task() {
   SERVICE=`printf $SERVICES | head -1`
 
   # find instance id with this service name running on it
-  ARN=`aws ecs list-tasks --cluster $CLUSTER --service-name $SERVICE --output json 2> /dev/null | jq -r ".taskArns[0]"`
+  ARN=`aws ecs list-tasks --cluster $CLUSTER --service-name $SERVICE --desired-status RUNNING --output json 2> /dev/null | jq -r ".taskArns[0]"`
   if [[ "$ARN" == "" || "$ARN" == "null" ]]; then
     echo "no running tasks for service $SERVICE"
     exit 1
   fi
-  CONTAINER=`aws ecs describe-tasks --cluster $CLUSTER --tasks $ARN --desired-status RUNNING --output json | jq -r ".tasks[0].containerInstanceArn"`
+  CONTAINER=`aws ecs describe-tasks --cluster $CLUSTER --tasks $ARN --output json | jq -r ".tasks[0].containerInstanceArn"`
   ID=`aws ecs describe-container-instances --cluster $CLUSTER --container-instances $CONTAINER --output json | jq -r ".containerInstances[0].ec2InstanceId"`
 
   ssh_to_ec2 $ID $MATCH_NAME $RUN_CMD
