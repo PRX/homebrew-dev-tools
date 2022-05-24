@@ -1,0 +1,64 @@
+#!/bin/bash
+PRX_DEFAULT_REGION=us-east-1
+SSH_USER=ec2-user
+SSH_OPTS="-o StrictHostKeyChecking=accept-new"
+[[ ! -z $PRX_SSH_KEY ]] && SSH_OPTS="$SSH_OPTS -i $PRX_SSH_KEY"
+[[ ! -z $PRX_AWS_PROFILE ]] && export AWS_PROFILE="$PRX_AWS_PROFILE"
+
+# args
+ENV="$1"
+REGION=$([[ $2 == "--region" ]] && $3 || $PRX_DEFAULT_REGION)
+if [[ ($ENV != "prod" && $ENV != "stag") || -z $REGION ]]; then
+  echo "Usage: awstunnel <stag|prod> --region [aws-region]"
+  exit 1
+fi
+
+# alias env to jump hostname
+if [[ $ENV == "prod" ]]; then
+  JUMP_HOST="jump.${REGION}.prx.tech"
+else
+  JUMP_HOST="jump.staging.$REGION.prx.tech"
+fi
+echo "Connecting to $JUMP_HOST..."
+
+# get env, and check for host key failure (jump servers can cycle out)
+OUT=`ssh $SSH_USER@$JUMP_HOST $SSH_OPTS 'printenv | grep ^PRX_'`
+if [[ $? != 0 ]]; then
+  echo "Error: $OUT"
+  # TODO: removing stale known_hosts (ssh-keygen -R jump.prx.tech)
+  exit 1
+else
+  export xargs $OUT
+fi
+
+# TODO: do we care to vary local ports by env/region?
+if [[ $ENV == "prod" ]]; then
+  MYSQL_LOCAL_PORT=3307
+  POSTGRES_LOCAL_PORT=5433
+  CASTLE_LOCAL_PORT=5434
+  REDIS_LOCAL_PORT=6380
+else
+  MYSQL_LOCAL_PORT=3309
+  POSTGRES_LOCAL_PORT=5435
+  CASTLE_LOCAL_PORT=5436
+  REDIS_LOCAL_PORT=6382
+fi
+
+# print configuration
+echo ""
+echo "+------+----------------------------+"
+echo "| Port | Tunnel Destination         |"
+echo "+------+----------------------------+"
+[[ ! -z "$PRX_SHARED_MYSQL_HOST" ]] && echo "| $MYSQL_LOCAL_PORT | $(printf %-26s "Shared Mysql $PRX_ENVIRONMENT") |"
+[[ ! -z "$PRX_SHARED_POSTGRES_HOST" ]] && echo "| $POSTGRES_LOCAL_PORT | $(printf %-26s "Shared Postgres $PRX_ENVIRONMENT") |"
+[[ ! -z "$PRX_CASTLE_POSTGRES_HOST" ]] && echo "| $CASTLE_LOCAL_PORT | $(printf %-26s "Castle Postgres $PRX_ENVIRONMENT") |"
+[[ ! -z "$PRX_SHARED_REDIS_HOST" ]] && echo "| $REDIS_LOCAL_PORT | $(printf %-26s "Shared Redis $PRX_ENVIRONMENT") |"
+echo "+------+----------------------------+"
+
+# time for tunneling
+ssh $SSH_USER@$JUMP_HOST -N \
+  $( [[ ! -z "$PRX_SHARED_MYSQL_HOST" ]] && printf %s "-L $MYSQL_LOCAL_PORT:$PRX_SHARED_MYSQL_HOST:$PRX_SHARED_MYSQL_PORT" ) \
+  $( [[ ! -z "$PRX_SHARED_POSTGRES_HOST" ]] && printf %s "-L $POSTGRES_LOCAL_PORT:$PRX_SHARED_POSTGRES_HOST:$PRX_SHARED_POSTGRES_PORT" ) \
+  $( [[ ! -z "$PRX_CASTLE_POSTGRES_HOST" ]] && printf %s "-L $CASTLE_LOCAL_PORT:$PRX_CASTLE_POSTGRES_HOST:$PRX_CASTLE_POSTGRES_PORT" ) \
+  $( [[ ! -z "$PRX_SHARED_REDIS_HOST" ]] && printf %s "-L $REDIS_LOCAL_PORT:$PRX_SHARED_REDIS_HOST:$PRX_SHARED_REDIS_PORT" ) \
+  $SSH_OPTS

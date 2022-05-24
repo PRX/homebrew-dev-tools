@@ -1,20 +1,19 @@
 #!/bin/bash
-ECS_KEY="id_ed25519_prx_developer"
-PROD_CLUSTER="infrastructure-cd-root-production-SharedEcsClusterStack-11IXC7OZI6I4U-EcsCluster-AJ4yJsOu3QDc"
-STAG_CLUSTER="infrastructure-cd-root-staging-SharedEcsClusterStack-1U7T895ADTHR9-EcsCluster-3TUHESV7htXa"
-
-export AWS_PROFILE=prx-legacy
-export AWS_DEFAULT_REGION=us-east-1
+PRX_DEFAULT_REGION=us-east-1
+SSH_USER=ec2-user
+SSH_OPTS="-o StrictHostKeyChecking=accept-new"
+[[ ! -z $PRX_SSH_KEY ]] && SSH_OPTS="$SSH_OPTS -i $PRX_SSH_KEY"
+[[ ! -z $PRX_AWS_PROFILE ]] && export AWS_PROFILE="$PRX_AWS_PROFILE"
 
 function usage() {
   echo "Usage:"
-  echo "  awssh <ec2-instance-id>"
-  echo "  awssh [stag|prod] <service>"
-  echo "  awssh [stag|prod] <service> <command>"
+  echo "  awssh <ec2-instance-id> --region [aws-region]"
+  echo "  awssh <stag|prod> <service> --region [aws-region]"
+  echo "  awssh <stag|prod> <service> <command> --region [aws-region]"
   echo ""
   echo "Examples:"
   echo "  awssh i-1234567890"
-  echo "  awssh stag cms"
+  echo "  awssh stag cms --region us-west-2"
   echo "  awssh stag cms console"
   echo "  awssh stag cms host"
   echo ""
@@ -31,24 +30,22 @@ function ssh_to_task() {
   RUN_CMD="$3"
 
   # match a service name
-  SERVICES=`aws ecs list-services --cluster $CLUSTER --output json 2> /dev/null | jq -r ".serviceArns[]"`
-  if [[ -n "$MATCH_NAME" ]]; then
-    SERVICES=`printf "$SERVICES" | grep -i "$MATCH_NAME"`
-  fi
-  if [[ -z "$SERVICES" ]]; then
-    echo "unable to find service match: $MATCH_NAME"
+  JQ_SELECT="map(select(ascii_downcase | contains(\"$MATCH_NAME\")))"
+  JQ_SORT="sort_by(ascii_downcase | contains(\"worker\"))"
+  SERVICE=`aws ecs list-services --cluster $CLUSTER | jq -r ".serviceArns | $JQ_SELECT | $JQ_SORT | last"`
+  if [[ "$SERVICE" == "null" ]]; then
+    echo "Unable to find service match: $MATCH_NAME"
     exit 1
   fi
-  SERVICE=`printf $SERVICES | head -1`
 
   # find instance id with this service name running on it
-  ARN=`aws ecs list-tasks --cluster $CLUSTER --service-name $SERVICE --desired-status RUNNING --output json 2> /dev/null | jq -r ".taskArns[0]"`
+  ARN=`aws ecs list-tasks --cluster $CLUSTER --service-name $SERVICE --desired-status RUNNING | jq -r ".taskArns[0]"`
   if [[ "$ARN" == "" || "$ARN" == "null" ]]; then
-    echo "no running tasks for service $SERVICE"
+    echo "No running tasks for service $SERVICE"
     exit 1
   fi
-  CONTAINER=`aws ecs describe-tasks --cluster $CLUSTER --tasks $ARN --output json | jq -r ".tasks[0].containerInstanceArn"`
-  ID=`aws ecs describe-container-instances --cluster $CLUSTER --container-instances $CONTAINER --output json | jq -r ".containerInstances[0].ec2InstanceId"`
+  CONTAINER=`aws ecs describe-tasks --cluster $CLUSTER --tasks $ARN | jq -r ".tasks[0].containerInstanceArn"`
+  ID=`aws ecs describe-container-instances --cluster $CLUSTER --container-instances $CONTAINER | jq -r ".containerInstances[0].ec2InstanceId"`
 
   ssh_to_ec2 $ID $MATCH_NAME $RUN_CMD
 }
@@ -59,18 +56,19 @@ function ssh_to_ec2() {
   MATCH_NAME="$2"
   RUN_CMD="$3"
 
-  IP=`aws ec2 describe-instances --instance-ids $ID --output json | jq -r ".Reservations[0].Instances[0].PublicIpAddress"`
+  # TODO: ssh through jump server to private IP instead
+  IP=`aws ec2 describe-instances --instance-ids $ID | jq -r ".Reservations[0].Instances[0].PublicIpAddress"`
   if [[ "$IP" == "" ]]; then
     echo "instance $ID not found"
     exit 1
   fi
 
   if [[ -z "$MATCH_NAME" || "$RUN_CMD" == "host" ]]; then
-    ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile /dev/null" -i ~/.ssh/$ECS_KEY ec2-user@${IP}
+    ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile /dev/null" $SSH_USER@${IP}
   else
     REAL_CMD="/bin/ash"
-    if [[ "$MATCH_NAME" == "sphinx" || "$MATCH_NAME" == "networks" || "$MATCH_NAME" == "exchange" || "$MATCH_NAME" == "thecount" ]]; then
-      REAL_CMD="/bin/bash"
+    if [[ "$MATCH_NAME" == "sphinx" || "$MATCH_NAME" == "networks" || "$MATCH_NAME" == "exchange" ]]; then
+      REAL_CMD="bin/bash"
     fi
     if [[ -n "$RUN_CMD" ]]; then
       REAL_CMD="./bin/application $RUN_CMD"
@@ -80,17 +78,43 @@ function ssh_to_ec2() {
     rows=$(tput lines)
 
     CMD="docker exec -it \$(docker ps --filter name=$MATCH_NAME --quiet --latest) /bin/sh -c \"stty cols $cols rows $rows && $REAL_CMD\""
-    ssh -t -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile /dev/null" -i ~/.ssh/$ECS_KEY ec2-user@${IP} "$CMD"
+    ssh -t -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile /dev/null" $SSH_USER@${IP} "$CMD"
   fi
 }
+
+# args
+ENV="$1"
+if [[ $2 == "--region" ]]; then
+  export AWS_REGION=$3
+elif [[ $3 == "--region" ]]; then
+  export AWS_REGION=$4
+elif [[ $4 == "--region" ]]; then
+  export AWS_REGION=$5
+else
+  export AWS_REGION=$PRX_DEFAULT_REGION
+fi
+export AWS_DEFAULT_OUTPUT="json"
 
 # run!
 if [[ $1 == i-* ]]; then
   ssh_to_ec2 $1
-elif [[ "$1" == "prod" ]]; then
-  ssh_to_task $PROD_CLUSTER $2 $3
+elif [[ "$1" == "prod" || "$1" == "stag" ]]; then
+  JUMP_SUFFIX="$AWS_REGION.prx.tech"
+  [[ "$1" == "prod" ]] && JUMP_HOST="jump.$JUMP_SUFFIX" || JUMP_HOST="jump.staging.$JUMP_SUFFIX"
+  NAME=`ssh $SSH_USER@$JUMP_HOST $SSH_OPTS 'echo $PRX_ECS_CLUSTER_NAME'`
+  if [[ $? != 0 ]]; then
+    echo "Error: $NAME"
+    # TODO: removing stale known_hosts (ssh-keygen -R jump.prx.tech)
+    exit 1
+  else
+    ssh_to_task $NAME $2 $3
+  fi
+
 elif [[ "$1" == "stag" ]]; then
-  ssh_to_task $STAG_CLUSTER $2 $3
+  NAME=$(ecs_cluster_name $1 $AWS_DEFAULT_REGION)
+  echo $NAME
+  # exit
+  ssh_to_task $NAME $2 $3
 else
   usage
 fi
