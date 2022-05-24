@@ -7,7 +7,7 @@ SSH_OPTS="-o StrictHostKeyChecking=accept-new"
 
 # args
 ENV="$1"
-REGION=$([[ $2 == "--region" ]] && $3 || $PRX_DEFAULT_REGION)
+REGION=$([[ $2 == "--region" ]] && echo $3 || echo $PRX_DEFAULT_REGION)
 if [[ ($ENV != "prod" && $ENV != "stag") || -z $REGION ]]; then
   echo "Usage: awstunnel <stag|prod> --region [aws-region]"
   exit 1
