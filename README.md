@@ -29,6 +29,18 @@ internet. To gain access locally, use the `awstunnel` script which tunnels some
 local high port numbers through our jump servers, to the staging/production db
 servers.
 
+## prxameter-get
+
+Used to get all the parameter-store keys/values underneath a slash-separated-path,
+in dotenv format. By default, writes to a well-named file that can be re-saved
+to parameter-store by `prxameter-set`.
+
+## prxameter-set
+
+Passing in a filename output by `prxameter-get`, writes any changes back to
+parameter-store. By default, does a dry-run previewing the changes unless you
+pass the `--commit` flag.
+
 # Contribute
 
 After you've made your changes and committed them to the main branch, create a new release in GitHub, with a new version tag (in the format `v1.2.3`). Once the release has been created, a GitHub action will automatically update the formula file to match the newly-released version and update the SHA 256 hash.
