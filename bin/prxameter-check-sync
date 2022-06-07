@@ -1,0 +1,135 @@
+#!/usr/bin/env ruby
+require 'bundler/inline'
+require 'json'
+require 'io/console'
+require 'fileutils'
+require 'pp'
+
+gemfile do
+  source 'https://rubygems.org'
+  gem 'aws-sdk-ssm'
+  gem 'nokogiri'
+  gem 'text-table'
+  gem 'inifile'
+  gem 'slop'
+end
+
+opts = Slop.parse do |o|
+  o.string '--profile', 'AWS profile', default: 'prx-legacy'
+  o.on '-h', '--help' do
+    puts o
+    exit
+  end
+end
+
+def get_and_cache_credentials
+  FileUtils.mkdir_p "#{Dir.home}/.aws/ruby"
+
+  aws_config_file = IniFile.load("#{Dir.home}/.aws/config")
+  aws_config_file_section = aws_config_file["profile #{opts[:profile]}"]
+  mfa_serial = aws_config_file_section['mfa_serial']
+  role_arn = aws_config_file_section['role_arn']
+  role_name = role_arn.split('role/')[1]
+
+  mfa_code = STDIN.getpass("Enter MFA code for #{mfa_serial}: ")
+  credentials = Aws.shared_config.assume_role_credentials_from_config(profile: opts[:profile], token_code: mfa_code.chomp)
+  sts = Aws::STS::Client.new(
+    region: 'us-east-1',
+    credentials: credentials
+  )
+  id = sts.get_caller_identity
+
+  cacheable_role = sts.assume_role({
+    role_arn: "arn:aws:sts::#{id.account}:role/#{role_name}",
+    role_session_name: "ruby-sdk-session-#{Time.now.to_i}",
+    duration_seconds: 900
+  })
+  # TODO boto3 and aws-cli write these files with unique names. I'm not sure
+  # why, or how they cleaned up, but maybe worth matching that behavior
+  File.write("#{Dir.home}/.aws/ruby/cache.json", JSON.dump(cacheable_role.to_h))
+
+  return Aws::Credentials.new(cacheable_role['credentials']['access_key_id'], cacheable_role['credentials']['secret_access_key'], cacheable_role['credentials']['session_token'])
+end
+
+def load_and_verify_cached_credentials
+  cached_role_json = File.read("#{Dir.home}/.aws/ruby/cache.json")
+  cached_role = JSON.parse(cached_role_json)
+
+  credentials = Aws::Credentials.new(cached_role['credentials']['access_key_id'], cached_role['credentials']['secret_access_key'], cached_role['credentials']['session_token'])
+
+  # Verify that the credentials still work; this will raise an error if they're
+  # bad, which we can catch
+  sts = Aws::STS::Client.new(region: 'us-east-1', credentials: credentials)
+  sts.get_caller_identity
+
+  return credentials
+rescue Aws::STS::Errors::ExpiredToken
+  return get_and_cache_credentials
+end
+
+def client_credentials
+  if(!File.file?("#{Dir.home}/.aws/ruby/cache.json"))
+    return get_and_cache_credentials
+  else
+    return load_and_verify_cached_credentials
+  end
+end
+
+# Add an entry for each region where sync should be checked
+clients = {
+  us_east_1: Aws::SSM::Client.new(region: 'us-east-1', credentials: client_credentials),
+  us_west_2: Aws::SSM::Client.new(region: 'us-west-2', credentials: client_credentials),
+}
+
+lookup = {}
+
+# All parameters under these paths will be checked
+paths = ['/prx/global/Spire', '/prx/prod/Spire', '/prx/stag/Spire']
+
+clients.each do |region, client|
+  paths.each do |path|
+    client.get_parameters_by_path({ path: path, recursive: true, with_decryption: true }).each do |resp|
+      parameters = resp[:parameters]
+
+      parameters.each do |parameter|
+        if !lookup[parameter.name]
+          lookup[parameter.name] = {}
+        end
+
+        lookup[parameter.name][region] = parameter.value
+      end
+    end
+  end
+end
+
+table = Text::Table.new
+table.head = ['Param', 'Sync?']
+clients.each { |r, c| table.head << r}
+
+lookup.each do |parameter_name, region_values|
+  row = [parameter_name]
+
+
+  if region_values.keys.length == clients.keys.length && region_values.values.uniq.count == 1
+    # Consider parameters in sync if they exist in each region, and the values
+    # in each region are identical
+    row << '✅'
+  elsif region_values.values.uniq.count > 1
+    # If there are non-identical values in various regions it means there's a
+    # mismatch that needs to be reconciled
+    row << '⚠️'
+  else
+    # Otherwise, it means one or more regions are missing a value, but the
+    # values that do exist are identical
+    row << '❌'
+  end
+
+  clients.each do |region, client|
+    row << (region_values[region] || '--')[0..20]
+  end
+
+  table.rows << row
+end
+
+
+print table.to_s
