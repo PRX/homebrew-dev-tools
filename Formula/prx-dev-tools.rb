@@ -9,6 +9,7 @@ class PrxDevTools < Formula
     bin.install "bin/awssh"
     bin.install "bin/awstunnel"
     bin.install "bin/prxameter-check-sync"
+    bin.install "bin/prxameter-region-sync"
   end
 
   test do
