@@ -193,7 +193,7 @@ if pending_updates == 0
   return
 end
 
-print "Synchronize these #{pending_updates} parameters [y/N]: "
+print "Synchronize these #{pending_updates} parameters from #{source_region.blue} to #{destination_regions.join(', ').red} [y/N]: "
 confirmation = STDIN.gets.chomp
 
 if confirmation != 'y'
