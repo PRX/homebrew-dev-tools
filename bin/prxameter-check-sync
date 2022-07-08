@@ -18,15 +18,20 @@ end
 
 # All parameters under these paths will be checked by default
 default_paths = ['/prx/global/Spire', '/prx/prod/Spire', '/prx/stag/Spire']
+default_regions = ['us-east-1', 'us-west-2']
 
 OPTS = Slop.parse do |o|
   o.string '--profile', 'AWS profile', default: 'prx-legacy'
   o.string '--paths', 'Paths (e.g., "/foo,/bar")', default: default_paths.join(',')
+  o.string '--regions', 'Regions (e.g., "us-east-1,us-west-1")', default: default_regions.join(',')
   o.on '-h', '--help' do
     puts o
     exit
   end
 end
+
+paths = OPTS[:paths].split(',')
+regions = OPTS[:regions].split(',')
 
 def cache_directory
   "#{Dir.home}/.aws/ruby/cache"
@@ -114,15 +119,15 @@ def client_credentials
 end
 
 # Add an entry for each region where sync should be checked
-clients = {
-  us_east_1: Aws::SSM::Client.new(region: 'us-east-1', credentials: client_credentials),
-  us_west_2: Aws::SSM::Client.new(region: 'us-west-2', credentials: client_credentials),
-}
+clients = {}
+regions.each do |region|
+  clients[region] = Aws::SSM::Client.new(region: region, credentials: client_credentials)
+end
 
 lookup = {}
 
 clients.each do |region, client|
-  OPTS[:paths].split(',').each do |path|
+  paths.each do |path|
     client.get_parameters_by_path({ path: path, recursive: true, with_decryption: true }).each do |resp|
       parameters = resp[:parameters]
 
