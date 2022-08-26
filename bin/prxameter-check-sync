@@ -1,4 +1,8 @@
 #!/usr/bin/env ruby
+# Finds all SSM Parameter Store parameters that exist in any of the given
+# regions under a given path, and reports whether their values are in sync
+# across all those regions.
+
 require 'bundler/inline'
 require 'json'
 require 'io/console'
