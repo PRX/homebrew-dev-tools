@@ -1,4 +1,8 @@
 #!/usr/bin/env ruby
+# For all SSM Parameter Store parameters under a given path in some single
+# region, copies their values to identically names parameters in a set of other
+# regions.
+
 require 'bundler/inline'
 require 'json'
 require 'io/console'
@@ -25,6 +29,7 @@ OPTS = Slop.parse do |o|
   o.string '--source-region', 'Source region (e.g., "us-east-1")', required: true
   o.string '--destination-regions', 'Destination regions (e.g., "us-west-1,us-west-2")', required: true
   o.bool '--list-matches', 'List matching values'
+  o.bool '--dry-run', 'Generate list without offering to sync'
   o.on '-h', '--help' do
     puts o
     exit
@@ -221,6 +226,10 @@ puts Terminal::Table.new headings: headings, rows: rows
 
 if pending_updates == 0
   print "Found nothing to synchronize\n\n"
+  return
+end
+
+if OPTS[:dry_run]
   return
 end
 
