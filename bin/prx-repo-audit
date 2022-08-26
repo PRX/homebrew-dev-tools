@@ -86,7 +86,6 @@ repos = [
   'PRX/prx_access',
   'PRX/announce',
   'PRX/prx-podagent',
-  'PRX/gather.prx.org',
   'PRX/radio.radiotopia.fm',
   'PRX/open_calais',
   'PRX/prx-ng-serve',
