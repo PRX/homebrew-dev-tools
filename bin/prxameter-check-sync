@@ -28,6 +28,7 @@ OPTS = Slop.parse do |o|
   o.string '--profile', 'AWS profile', default: 'prx-legacy'
   o.string '--paths', 'Paths (e.g., "/foo,/bar")', default: default_paths.join(',')
   o.string '--regions', 'Regions (e.g., "us-east-1,us-west-1")', default: default_regions.join(',')
+  o.bool '--hide-matches', 'Hide matching values'
   o.on '-h', '--help' do
     puts o
     exit
@@ -161,6 +162,8 @@ lookup.each do |parameter_name, region_values|
   end
 
   if region_values.keys.length == clients.keys.length && region_values.values.map(&:value).uniq.count == 1 && region_values.values.map(&:type).uniq.count == 1
+    next if OPTS[:hide_matches]
+
     # Consider parameters in sync if they exist in each region, and the values
     # and types in each region are identical
     row << '✅'
