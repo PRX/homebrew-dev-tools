@@ -21,7 +21,7 @@ gemfile do
 end
 
 # All parameters under these paths will be checked by default
-default_paths = ['/prx/global/Spire', '/prx/prod/Spire', '/prx/stag/Spire']
+default_paths = ['/prx/global/Spire', '/prx/stag/Spire']
 default_regions = ['us-east-1', 'us-west-2']
 
 OPTS = Slop.parse do |o|

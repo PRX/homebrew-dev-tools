@@ -21,7 +21,7 @@ gemfile do
 end
 
 # All parameters under these paths will be checked by default
-default_paths = ['/prx/global/Spire', '/prx/prod/Spire', '/prx/stag/Spire']
+default_paths = ['/prx/global/Spire', '/prx/stag/Spire']
 
 OPTS = Slop.parse do |o|
   o.string '--profile', 'AWS profile', default: 'prx-legacy'
