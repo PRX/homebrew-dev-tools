@@ -7,6 +7,7 @@ class PrxDevTools < Formula
 
   def install
     bin.install "bin/awssh"
+    bin.install "bin/awsso"
     bin.install "bin/awstunnel"
     bin.install "bin/prxameter-list"
     bin.install "bin/prxameter-check-sync"
