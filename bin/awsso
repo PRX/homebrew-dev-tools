@@ -36,7 +36,7 @@ def get_cached_sso_access_token(profile_start_url)
   return sso_access_token
 end
 
-def get_creds_and_copy(region, role_name, account_id, sso_access_token)
+def get_iam_credentials(region, role_name, account_id, sso_access_token)
   sso = Aws::SSO::Client.new(region: region)
 
   role_creds = sso.get_role_credentials({
@@ -45,15 +45,7 @@ def get_creds_and_copy(region, role_name, account_id, sso_access_token)
     access_token: sso_access_token,
   })
 
-  access_key_id = role_creds[:role_credentials][:access_key_id]
-  secret_access_key = role_creds[:role_credentials][:secret_access_key]
-  session_token = role_creds[:role_credentials][:session_token]
-
-  var_string = "AWS_ACCESS_KEY_ID=#{access_key_id} AWS_SECRET_ACCESS_KEY=#{secret_access_key} AWS_SESSION_TOKEN=#{session_token}"
-
-  `echo #{var_string} | pbcopy`
-  puts "Copied!".green
-  puts
+  return role_creds[:role_credentials]
 end
 
 # Load the AWS config INI file
@@ -145,23 +137,32 @@ if sso_profile_selection.match(/^[0-9]+$/)
 
     # Ensure that the access token can be used to get actual role credentials.
     # If it can't, force a new SSO login to upsert the cache.
+    creds = nil
     begin
-      get_creds_and_copy(region, role_name, account_id, sso_access_token)
+      creds = get_iam_credentials(region, role_name, account_id, sso_access_token)
     rescue Aws::SSO::Errors::UnauthorizedException
       puts "The cached SSO token was invalid. A browser will open to login and fetch a fresh token.".red
 
       `aws sso login --profile #{sso_selected_profile_name}`
       sso_access_token = get_cached_sso_access_token(profile_start_url)
 
-      if command_selection == '1'
-        var_string = "export AWS_PROFILE=#{sso_selected_profile_name}"
-        `echo #{var_string} | pbcopy`
-      elsif command_selection == '2'
-        get_creds_and_copy(region, role_name, account_id, sso_access_token)
-      end
-
-      puts "Copied!".green
-      puts
+      # Confirm the login worked by getting some credentials with the token
+      creds = get_iam_credentials(region, role_name, account_id, sso_access_token)
     end
+
+    if command_selection == '1'
+      var_string = "export AWS_PROFILE=#{sso_selected_profile_name}"
+      `echo #{var_string} | pbcopy`
+    elsif command_selection == '2'
+      access_key_id = creds[:access_key_id]
+      secret_access_key = creds[:secret_access_key]
+      session_token = creds[:session_token]
+
+      var_string = "AWS_ACCESS_KEY_ID=#{access_key_id} AWS_SECRET_ACCESS_KEY=#{secret_access_key} AWS_SESSION_TOKEN=#{session_token}"
+      `echo #{var_string} | pbcopy`
+    end
+
+    puts "Copied!".green
+    puts
   end
 end
