@@ -17,6 +17,8 @@ gemfile do
   gem 'nokogiri'
 end
 
+AWS_CONFIG_FILE = ENV['AWS_CONFIG_FILE'] || "#{Dir.home}/.aws/config"
+
 # Look through the native SSO cache to find a token that appears to be
 # associated with the given start URL. If the token hasn't expired, returns
 # that token.
@@ -49,7 +51,7 @@ def get_iam_credentials(region, role_name, account_id, sso_access_token)
 end
 
 # Load the AWS config INI file
-aws_config_file = IniFile.load("#{Dir.home}/.aws/config")
+aws_config_file = IniFile.load(AWS_CONFIG_FILE)
 
 # Find the name of each profile that appears to use SSO
 sso_profile_names = []

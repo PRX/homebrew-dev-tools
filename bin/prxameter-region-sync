@@ -23,6 +23,8 @@ end
 # All parameters under these paths will be checked by default
 default_paths = ['/prx/global/Spire', '/prx/stag/Spire']
 
+AWS_CONFIG_FILE = ENV['AWS_CONFIG_FILE'] || "#{Dir.home}/.aws/config"
+
 OPTS = Slop.parse do |o|
   o.string '--profile', 'AWS profile', default: 'prx-legacy'
   o.string '--paths', 'Paths (e.g., "/foo,/bar")', default: default_paths.join(',')
@@ -57,7 +59,7 @@ def cache_key_path(assume_role_options)
 end
 
 def assume_role_options
-  aws_config_file = IniFile.load("#{Dir.home}/.aws/config")
+  aws_config_file = IniFile.load(AWS_CONFIG_FILE)
   aws_config_file_section = aws_config_file["profile #{OPTS[:profile]}"]
   mfa_serial = aws_config_file_section['mfa_serial']
   role_arn = aws_config_file_section['role_arn']
@@ -74,7 +76,7 @@ end
 def get_and_cache_credentials
   FileUtils.mkdir_p cache_directory
 
-  aws_config_file = IniFile.load("#{Dir.home}/.aws/config")
+  aws_config_file = IniFile.load(AWS_CONFIG_FILE)
   aws_config_file_section = aws_config_file["profile #{OPTS[:profile]}"]
   mfa_serial = aws_config_file_section['mfa_serial']
   role_arn = aws_config_file_section['role_arn']
