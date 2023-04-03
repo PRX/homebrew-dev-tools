@@ -3,42 +3,41 @@
 # regions under a given path, and reports whether their values are in sync
 # across all those regions.
 
-require 'bundler/inline'
-require 'json'
-require 'io/console'
-require 'fileutils'
-require 'pp'
-require 'digest'
+require "bundler/inline"
+require "json"
+require "io/console"
+require "fileutils"
+require "digest"
 
 gemfile do
-  source 'https://rubygems.org'
-  gem 'awesome_print'
-  gem 'aws-sdk-ssm'
-  gem 'nokogiri'
-  gem 'terminal-table'
-  gem 'inifile'
-  gem 'slop'
+  source "https://rubygems.org"
+  gem "awesome_print"
+  gem "aws-sdk-ssm"
+  gem "nokogiri"
+  gem "terminal-table"
+  gem "inifile"
+  gem "slop"
 end
 
 # All parameters under these paths will be checked by default
-default_paths = ['/prx/global/Spire', '/prx/stag/Spire']
-default_regions = ['us-east-1', 'us-west-2']
+default_paths = ["/prx/global/Spire", "/prx/stag/Spire"]
+default_regions = ["us-east-1", "us-west-2"]
 
-AWS_CONFIG_FILE = ENV['AWS_CONFIG_FILE'] || "#{Dir.home}/.aws/config"
+AWS_CONFIG_FILE = ENV["AWS_CONFIG_FILE"] || "#{Dir.home}/.aws/config"
 
 OPTS = Slop.parse do |o|
-  o.string '--profile', 'AWS profile', default: 'prx-legacy'
-  o.string '--paths', 'Paths (e.g., "/foo,/bar")', default: default_paths.join(',')
-  o.string '--regions', 'Regions (e.g., "us-east-1,us-west-1")', default: default_regions.join(',')
-  o.bool '--hide-matches', 'Hide matching values'
-  o.on '-h', '--help' do
+  o.string "--profile", "AWS profile", default: "prx-legacy"
+  o.string "--paths", 'Paths (e.g., "/foo,/bar")', default: default_paths.join(",")
+  o.string "--regions", 'Regions (e.g., "us-east-1,us-west-1")', default: default_regions.join(",")
+  o.bool "--hide-matches", "Hide matching values"
+  o.on "-h", "--help" do
     puts o
     exit
   end
 end
 
-paths = OPTS[:paths].split(',')
-regions = OPTS[:regions].split(',')
+paths = OPTS[:paths].split(",")
+regions = OPTS[:regions].split(",")
 
 def cache_directory
   "#{Dir.home}/.aws/ruby/cache"
@@ -64,14 +63,14 @@ def sso_get_role_options
   aws_config_file = IniFile.load(AWS_CONFIG_FILE)
   aws_config_file_section = aws_config_file["profile #{OPTS[:profile]}"]
 
-  if aws_config_file_section['sso_start_url']
-    profile_start_url = aws_config_file_section['sso_start_url']
+  if aws_config_file_section["sso_start_url"]
+    profile_start_url = aws_config_file_section["sso_start_url"]
 
     sso_access_token = nil
     Dir["#{Dir.home}/.aws/sso/cache/*.json"].each do |path|
-      data = JSON.parse(File.open(path).read)
-      if data['startUrl'] && data['startUrl'] == profile_start_url
-        sso_access_token = data['accessToken']
+      data = JSON.parse(File.read(path))
+      if data["startUrl"] && data["startUrl"] == profile_start_url
+        sso_access_token = data["accessToken"]
         break
       end
     end
@@ -81,9 +80,9 @@ def sso_get_role_options
     end
 
     {
-      role_name: aws_config_file_section['sso_role_name'],
-      account_id: "#{aws_config_file_section['sso_account_id']}",
-      access_token: sso_access_token,
+      role_name: aws_config_file_section["sso_role_name"],
+      account_id: aws_config_file_section["sso_account_id"].to_s,
+      access_token: sso_access_token
     }
   end
 end
@@ -95,10 +94,10 @@ def assume_role_options
   aws_config_file = IniFile.load(AWS_CONFIG_FILE)
   aws_config_file_section = aws_config_file["profile #{OPTS[:profile]}"]
 
-  if aws_config_file_section['role_arn']
-    role_arn = aws_config_file_section['role_arn']
-    role_name = role_arn.split('role/')[1]
-    account_id = role_arn.split(':')[4]
+  if aws_config_file_section["role_arn"]
+    role_arn = aws_config_file_section["role_arn"]
+    role_name = role_arn.split("role/")[1]
+    account_id = role_arn.split(":")[4]
 
     {
       role_arn: "arn:aws:sts::#{account_id}:role/#{role_name}",
@@ -114,38 +113,35 @@ def get_and_cache_credentials
   aws_config_file = IniFile.load(AWS_CONFIG_FILE)
   aws_config_file_section = aws_config_file["profile #{OPTS[:profile]}"]
 
-  if aws_config_file_section['sso_role_name']
+  if aws_config_file_section["sso_role_name"]
     opts = sso_get_role_options
 
-    sso = Aws::SSO::Client.new(region: aws_config_file_section['region'])
+    sso = Aws::SSO::Client.new(region: aws_config_file_section["region"])
     credentials = sso.get_role_credentials(opts)
 
-    File.write(cache_key_path(opts), JSON.dump({'credentials' => {
-      'access_key_id' => credentials.role_credentials.access_key_id,
-      'secret_access_key' => credentials.role_credentials.secret_access_key,
-      'session_token' => credentials.role_credentials.session_token,
+    File.write(cache_key_path(opts), JSON.dump({"credentials" => {
+      "access_key_id" => credentials.role_credentials.access_key_id,
+      "secret_access_key" => credentials.role_credentials.secret_access_key,
+      "session_token" => credentials.role_credentials.session_token
     }}))
 
-    return Aws::Credentials.new(credentials.role_credentials.access_key_id, credentials.role_credentials.secret_access_key, credentials.role_credentials.session_token)
-  elsif aws_config_file_section['mfa_serial']
-    mfa_serial = aws_config_file_section['mfa_serial']
-    role_arn = aws_config_file_section['role_arn']
-    role_name = role_arn.split('role/')[1]
-    account_id = role_arn.split(':')[4]
+    Aws::Credentials.new(credentials.role_credentials.access_key_id, credentials.role_credentials.secret_access_key, credentials.role_credentials.session_token)
+  elsif aws_config_file_section["mfa_serial"]
+    mfa_serial = aws_config_file_section["mfa_serial"]
 
-    mfa_code = STDIN.getpass("Enter MFA code for #{mfa_serial}: ")
+    mfa_code = $stdin.getpass("Enter MFA code for #{mfa_serial}: ")
     credentials = Aws.shared_config.assume_role_credentials_from_config(profile: OPTS[:profile], token_code: mfa_code.chomp)
     sts = Aws::STS::Client.new(
-      region: 'us-east-1',
+      region: "us-east-1",
       credentials: credentials
     )
-    id = sts.get_caller_identity
+    _id = sts.get_caller_identity
 
     opts = assume_role_options
     cacheable_role = sts.assume_role(assume_role_options)
     File.write(cache_key_path(opts), JSON.dump(cacheable_role.to_h))
 
-    return Aws::Credentials.new(cacheable_role['credentials']['access_key_id'], cacheable_role['credentials']['secret_access_key'], cacheable_role['credentials']['session_token'])
+    Aws::Credentials.new(cacheable_role["credentials"]["access_key_id"], cacheable_role["credentials"]["secret_access_key"], cacheable_role["credentials"]["session_token"])
   end
 rescue Aws::SSO::Errors::UnauthorizedException
   raise "The SSO access token for this profile is invalid. Run 'aws sso login --profile #{OPTS[:profile]}' to fetch a valid token."
@@ -158,20 +154,20 @@ def load_and_verify_cached_credentials
   cached_role_json = File.read(cache_key_path(options))
   cached_role = JSON.parse(cached_role_json)
 
-  credentials = Aws::Credentials.new(cached_role['credentials']['access_key_id'], cached_role['credentials']['secret_access_key'], cached_role['credentials']['session_token'])
+  credentials = Aws::Credentials.new(cached_role["credentials"]["access_key_id"], cached_role["credentials"]["secret_access_key"], cached_role["credentials"]["session_token"])
 
   # Verify that the credentials still work; this will raise an error if they're
   # bad, which we can catch
-  sts = Aws::STS::Client.new(region: 'us-east-1', credentials: credentials)
+  sts = Aws::STS::Client.new(region: "us-east-1", credentials: credentials)
   sts.get_caller_identity
 
-  return credentials
+  credentials
 rescue Aws::STS::Errors::ExpiredToken
-  return get_and_cache_credentials
+  get_and_cache_credentials
 rescue Aws::STS::Errors::InvalidClientTokenId
-  return get_and_cache_credentials
+  get_and_cache_credentials
 rescue Errno::ENOENT
-  return get_and_cache_credentials
+  get_and_cache_credentials
 end
 
 # Returns temporary client credentials for the profile selected with --profile
@@ -183,14 +179,14 @@ def client_credentials
   return if !options
 
   # Check for a cache file with a name derived from those options.
-  if(!File.file?(cache_key_path(options)))
+  if !File.file?(cache_key_path(options))
     # When no cache exists for these options, fetch new credentials, cache them
     # and return them.
-    return get_and_cache_credentials
+    get_and_cache_credentials
   else
     # When there is a cache for these options, return them if they are still
     # valid, otherwise refresh them and return the new credentials.
-    return load_and_verify_cached_credentials
+    load_and_verify_cached_credentials
   end
 end
 
@@ -205,7 +201,7 @@ lookup = {}
 
 clients.each do |region, client|
   paths.each do |path|
-    client.get_parameters_by_path({ path: path, recursive: true, with_decryption: true }).each do |resp|
+    client.get_parameters_by_path({path: path, recursive: true, with_decryption: true}).each do |resp|
       parameters = resp[:parameters]
 
       parameters.each do |parameter|
@@ -219,18 +215,18 @@ clients.each do |region, client|
   end
 end
 
-headings = ['Parameter Name', '🔄', '🔒', *clients.keys]
+headings = ["Parameter Name", "🔄", "🔒", *clients.keys]
 rows = []
 
 lookup.each do |parameter_name, region_values|
-  if parameter_name.include?('/prod/')
-    row = [parameter_name.purple]
-  elsif  parameter_name.include?('/stag/')
-    row = [parameter_name.yellow]
-  elsif  parameter_name.include?('/global/')
-    row = [parameter_name.blue]
+  row = if parameter_name.include?("/prod/")
+    [parameter_name.purple]
+  elsif parameter_name.include?("/stag/")
+    [parameter_name.yellow]
+  elsif parameter_name.include?("/global/")
+    [parameter_name.blue]
   else
-    row = [parameter_name]
+    [parameter_name]
   end
 
   if region_values.keys.length == clients.keys.length && region_values.values.map(&:value).uniq.count == 1 && region_values.values.map(&:type).uniq.count == 1
@@ -238,21 +234,21 @@ lookup.each do |parameter_name, region_values|
 
     # Consider parameters in sync if they exist in each region, and the values
     # and types in each region are identical
-    row << '✅'
-  elsif region_values.values.map(&:value).uniq.count > 1 ||  region_values.values.map(&:type).uniq.count > 1
+    row << "✅"
+  elsif region_values.values.map(&:value).uniq.count > 1 || region_values.values.map(&:type).uniq.count > 1
     # If there are non-identical values or types in various regions it means
     # there's a mismatch that needs to be reconciled
-    row << '⚠️'
+    row << "⚠️"
   else
     # Otherwise, it means one or more regions are missing a value, but the
     # values that do exist are identical
-    row << '❌'
+    row << "❌"
   end
 
-  if region_values.values.first.type == 'SecureString'
-    row << '🔒'
+  row << if region_values.values.first.type == "SecureString"
+    "🔒"
   else
-    row << '➖'
+    "➖"
   end
 
   clients.each do |region, client|
@@ -260,19 +256,19 @@ lookup.each do |parameter_name, region_values|
       # Show at most 20 characters. If the value doesn't fit, show the first
       # 19 characters and an ellipsis
       parameter_value = region_values[region].value
-      text = (parameter_value.length < 21 ? parameter_value : "#{parameter_value[0..18].strip}…")
+      text = ((parameter_value.length < 21) ? parameter_value : "#{parameter_value[0..18].strip}…")
 
-      if row[1] == '✅'
-        row << text.greenish
-      elsif row[1] == '⚠️'
-        row << text.yellowish
-      elsif row[1] == '❌'
-        row << text.redish
+      row << if row[1] == "✅"
+        text.greenish
+      elsif row[1] == "⚠️"
+        text.yellowish
+      elsif row[1] == "❌"
+        text.redish
       else
-        row << text
+        text
       end
     else
-      row << '➖'
+      row << "➖"
     end
   end
 
