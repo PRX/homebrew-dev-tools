@@ -18,4 +18,4 @@ jobs:
         with:
           bundler-cache: true
       - name: Lint Ruby files
-        run: bundle exec standardrb "./**/*.rb"
+        run: bundle exec standardrb "bin/*.rb" "Formula/prx-dev-tools.rb"
