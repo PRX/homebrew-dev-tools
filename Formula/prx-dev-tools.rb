@@ -10,9 +10,9 @@ class PrxDevTools < Formula
     bin.install "bin/awsso.rb" => "awsso"
     bin.install "bin/awstunnel"
     bin.install "bin/prxameter-check-sync"
-    bin.install "bin/prxameter-region-sync"
     bin.install "bin/prx-repo-audit"
     bin.install "bin/prxameter-list.rb" => "prxameter-list"
+    bin.install "bin/prxameter-region-sync" => "prxameter-region-sync"
   end
 
   test do
