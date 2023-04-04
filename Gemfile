@@ -3,3 +3,4 @@
 source "https://rubygems.org"
 
 gem "standard", "~> 1.26"
+gem "rake"
