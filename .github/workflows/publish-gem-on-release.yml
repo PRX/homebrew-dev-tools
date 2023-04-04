@@ -26,7 +26,7 @@ jobs:
           git checkout main
 
           # Update the gemspec file with the new version
-          sed -i "s/s.version = \".*\"/s.version = \"$semver\"/" lib/ruby-aws-creds/ruby-aws-creds.gemspec
+          sed -i "s/s.version = \".*\"/s.version = \"$semver\"/" lib/prx-ruby-aws-creds/prx-ruby-aws-creds.gemspec
 
           git config user.name github-actions
           git config user.email github-actions@github.com
