@@ -1,6 +1,6 @@
 AWS_CONFIG_FILE = ENV["AWS_CONFIG_FILE"] || "#{Dir.home}/.aws/config"
 
-class RubyAuth
+class RubyAwsCreds
   class << self
     def cache_directory
       "#{Dir.home}/.aws/ruby/cache"
