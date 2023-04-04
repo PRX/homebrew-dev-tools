@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "ruby-aws-creds"
-  s.version = "0.0.1"
+  s.version = "$semver"
   s.summary = "tktk"
   s.description = "tktk"
   s.authors = ["Christopher Kalafarski"]
