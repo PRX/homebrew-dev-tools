@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "prx-ruby-aws-creds"
-  s.version = "0.0.35"
+  s.version = "0.1.0"
   s.summary = "tktk"
   s.description = "tktk"
   s.authors = ["Christopher Kalafarski"]
