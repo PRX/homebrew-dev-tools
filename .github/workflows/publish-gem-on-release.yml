@@ -1,0 +1,43 @@
+name: >
+  Publish new version of ruby-aws-creds gem to GitHub Packages when new
+  releases are created
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  publish_gem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Update gemspec version
+        run: |
+          # Get the tag version (e.g., "v1.2.3") from the environment
+          tag=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
+
+          # Get just the numberical version number
+          semver=$(echo $tag | sed "s/v//")
+
+          # Need an local Git repository so we can commit changes
+          git fetch
+          git checkout main
+
+          # Update the gemspec file with the new version
+          sed -i 's/s.version = ".*"/s.version = "$semver"/' lib/ruby-aws-creds.gemspec
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git diff
+          git add .
+          git commit -m "Automatically update gemspec for release $tag"
+          git push
+
+      - name: Publish gem
+        uses: jstastny/publish-gem-to-github@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: PRX
+          working-directory: lib/ruby-aws-creds

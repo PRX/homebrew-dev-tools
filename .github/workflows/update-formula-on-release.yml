@@ -15,6 +15,7 @@ jobs:
           # Get the tag version (e.g., "v1.2.3") from the environment
           tag=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
 
+          # Need an local Git repository so we can commit changes
           git fetch
           git checkout main
 
