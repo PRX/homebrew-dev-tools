@@ -36,8 +36,7 @@ jobs:
           git push
 
       - name: Publish gem
-        uses: jstastny/publish-gem-to-github@master
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          owner: PRX
-          working-directory: lib/ruby-aws-creds
+        uses: cadwallion/publish-rubygems-action@master
+        env:
+          RUBYGEMS_API_KEY: ${{secrets.RUBY_GEMS_PUSH_API_KEY}}
+          WORKDIR: lib/prx-ruby-aws-creds
