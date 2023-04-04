@@ -40,3 +40,4 @@ jobs:
         env:
           RUBYGEMS_API_KEY: ${{secrets.RUBY_GEMS_PUSH_API_KEY}}
           WORKDIR: lib/prx-ruby-aws-creds
+          RELEASE_COMMAND: gem build --output=latest-release.gem && gem push latest-release.gem
