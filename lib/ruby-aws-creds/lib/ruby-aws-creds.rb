@@ -39,7 +39,11 @@ class RubyAwsCreds
         end
 
         if !sso_access_token
-          raise "No SSO access token was found for this profile. Run 'aws sso login --profile #{OPTS[:profile]}' to fetch a valid token."
+          puts "No SSO access token was found for this profile."
+          puts "Press RETURN to request a token in a web browser."
+          puts "You can do this manually with: 'aws sso login --profile #{OPTS[:profile]}'"
+          inp = $stdin.gets.chomp
+          `aws sso login --profile #{OPTS[:profile]}` if inp.empty?
         end
 
         {
