@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.name = "ruby-aws-creds"
+  s.name = "prx-ruby-aws-creds"
   s.version = "0.0.34"
   s.summary = "tktk"
   s.description = "tktk"
