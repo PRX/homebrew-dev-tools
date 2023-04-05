@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
-# Finds all SSM Parameter Store parameters that exist in any of the given
-# regions under a given path, and reports whether their values are in sync
-# across all those regions.
+# Checks all SSM Parameter Store parameters in a single region that get
+# promoted from staging to production during deploys (e.g., Docker image tags),
+# to ensure that they are in sync in the two environments.
 
 require "bundler/inline"
 require "json"

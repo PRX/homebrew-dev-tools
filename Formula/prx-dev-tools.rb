@@ -14,6 +14,7 @@ class PrxDevTools < Formula
     bin.install "bin/prxameter-check-sync.rb" => "prxameter-check-sync"
     bin.install "bin/prxameter-region-sync.rb" => "prxameter-region-sync"
     bin.install "bin/prxameter-check-promotion.rb" => "prxameter-check-promotion"
+    bin.install "bin/prx-cfn-tree.rb" => "prx-cfn-tree"
   end
 
   test do
