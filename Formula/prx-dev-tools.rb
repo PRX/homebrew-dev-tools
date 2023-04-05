@@ -13,6 +13,7 @@ class PrxDevTools < Formula
     bin.install "bin/prxameter-list.rb" => "prxameter-list"
     bin.install "bin/prxameter-check-sync.rb" => "prxameter-check-sync"
     bin.install "bin/prxameter-region-sync.rb" => "prxameter-region-sync"
+    bin.install "bin/prxameter-check-promotion.rb" => "prxameter-check-promotion"
   end
 
   test do
