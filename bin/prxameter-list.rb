@@ -3,10 +3,6 @@
 # regions under one or more paths.
 
 require "bundler/inline"
-require "json"
-require "io/console"
-require "fileutils"
-require "digest"
 
 gemfile do
   source "https://rubygems.org"
@@ -14,7 +10,6 @@ gemfile do
   gem "aws-sdk-ssm"
   gem "nokogiri"
   gem "tty-table"
-  gem "inifile"
   gem "slop"
   gem "prx-ruby-aws-creds"
 end

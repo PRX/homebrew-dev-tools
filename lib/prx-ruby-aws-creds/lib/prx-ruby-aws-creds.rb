@@ -1,3 +1,12 @@
+require "json"
+require "digest"
+require "fileutils"
+require "io/console"
+require "inifile"
+require "aws-sdk-core"
+require "aws-sdk-sts"
+require "aws-sdk-sso"
+
 AWS_CONFIG_FILE = ENV["AWS_CONFIG_FILE"] || "#{Dir.home}/.aws/config"
 
 class PrxRubyAwsCreds

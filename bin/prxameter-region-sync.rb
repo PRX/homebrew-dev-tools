@@ -1,13 +1,9 @@
 #!/usr/bin/env ruby
 # For all SSM Parameter Store parameters under a given path in some single
-# region, copies their values to identically names parameters in a set of other
+# region, copies their values to identically named parameters in a set of other
 # regions.
 
 require "bundler/inline"
-require "json"
-require "io/console"
-require "fileutils"
-require "digest"
 
 gemfile do
   source "https://rubygems.org"
@@ -15,14 +11,12 @@ gemfile do
   gem "aws-sdk-ssm"
   gem "nokogiri"
   gem "terminal-table"
-  gem "inifile"
   gem "slop"
   gem "prx-ruby-aws-creds"
 end
 
 # All parameters under these paths will be checked by default
 default_paths = ["/prx/global/Spire", "/prx/stag/Spire"]
-
 
 OPTS = Slop.parse do |o|
   o.string "--profile", "AWS profile", default: "prx-legacy"
