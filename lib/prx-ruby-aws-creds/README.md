@@ -1,4 +1,4 @@
-Meant to be used in CLI Ruby scripts. Assumes it can do things with STDIN, like get user input, so generally would be useless in other scendarios.
+Meant to be used in CLI Ruby scripts. Assumes it can do things with STDIN, like get user input, so generally would be useless in other scenarios.
 
 ## Usage
 
@@ -8,7 +8,7 @@ Add the Gem to a Ruby script that needs to make AWS API calls
 require "bundler/inline"
 
 gemfile do
-  gem "ruby-aws-creds", git: "https://github.com/PRX/homebrew-dev-tools.git", branch: "main", glob: "lib/ruby-aws-creds/ruby-aws-creds.gemspec"
+  gem "prx-ruby-aws-creds"
 end
 ```
 
