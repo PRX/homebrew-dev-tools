@@ -3,18 +3,13 @@
 # given stack.
 
 require "bundler/inline"
-require "json"
-require "io/console"
-require "fileutils"
-require "digest"
 
 gemfile do
   source "https://rubygems.org"
   gem "awesome_print"
-  gem 'aws-sdk-cloudformation'
+  gem "aws-sdk-cloudformation"
   gem "nokogiri"
   gem "terminal-table"
-  gem "inifile"
   gem "slop"
   gem "prx-ruby-aws-creds"
 end
