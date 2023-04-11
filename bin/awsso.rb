@@ -37,8 +37,8 @@ def get_cached_sso_access_token(profile_start_url)
   sso_access_token
 end
 
-def get_iam_credentials(region, role_name, account_id, sso_access_token)
-  sso = Aws::SSO::Client.new(region: region)
+def get_iam_credentials(sso_region, role_name, account_id, sso_access_token)
+  sso = Aws::SSO::Client.new(region: sso_region)
 
   role_creds = sso.get_role_credentials({
     role_name: role_name,
@@ -82,7 +82,7 @@ if /^[0-9]+$/.match?(sso_profile_selection)
 
     # Get the config values from the INI file for the selected profile
     aws_config_file_section = aws_config_file["profile #{sso_selected_profile_name}"]
-    region = aws_config_file_section["region"]
+    sso_region = aws_config_file_section["sso_region"]
     account_id = aws_config_file_section["sso_account_id"]
     role_name = aws_config_file_section["sso_role_name"]
     profile_start_url = aws_config_file_section["sso_start_url"]
@@ -139,7 +139,7 @@ if /^[0-9]+$/.match?(sso_profile_selection)
     # If it can't, force a new SSO login to upsert the cache.
     creds = nil
     begin
-      creds = get_iam_credentials(region, role_name, account_id, sso_access_token)
+      creds = get_iam_credentials(sso_region, role_name, account_id, sso_access_token)
     rescue Aws::SSO::Errors::UnauthorizedException
       puts "The cached SSO token was invalid. A browser will open to login and fetch a fresh token.".red
 
@@ -147,7 +147,7 @@ if /^[0-9]+$/.match?(sso_profile_selection)
       sso_access_token = get_cached_sso_access_token(profile_start_url)
 
       # Confirm the login worked by getting some credentials with the token
-      creds = get_iam_credentials(region, role_name, account_id, sso_access_token)
+      creds = get_iam_credentials(sso_region, role_name, account_id, sso_access_token)
     end
 
     if command_selection == "1"
