@@ -4,10 +4,6 @@
 # across all those regions.
 
 require "bundler/inline"
-require "json"
-require "io/console"
-require "fileutils"
-require "digest"
 
 gemfile do
   source "https://rubygems.org"
@@ -15,11 +11,9 @@ gemfile do
   gem "aws-sdk-ssm"
   gem "nokogiri"
   gem "terminal-table"
-  gem "inifile"
   gem "slop"
   gem "prx-ruby-aws-creds"
 end
-
 
 # All parameters under these paths will be checked by default
 default_paths = ["/prx/global/Spire", "/prx/stag/Spire"]

@@ -1,4 +1,4 @@
-Meant to be used in CLI Ruby scripts. Assumes it can do things with STDIN, like get user input, so generally would be useless in other scendarios.
+Meant to be used in CLI Ruby scripts. Assumes it can do things with STDIN, like get user input, so generally would be useless in other scenarios.
 
 ## Usage
 
@@ -8,7 +8,7 @@ Add the Gem to a Ruby script that needs to make AWS API calls
 require "bundler/inline"
 
 gemfile do
-  gem "ruby-aws-creds", git: "https://github.com/PRX/homebrew-dev-tools.git", branch: "main", glob: "lib/ruby-aws-creds/ruby-aws-creds.gemspec"
+  gem "prx-ruby-aws-creds"
 end
 ```
 
@@ -18,9 +18,11 @@ Use `RubyAwsCreds.client_credentials` when creating AWS SDK clients:
 client = Aws::SSM::Client.new(region: "us-east-1", credentials: RubyAwsCreds.client_credentials)
 ```
 
+`RubyAwsCreds.client_credentials` always returns an instance of `Aws::Credentials`.
+
 ## Other
 
-It's assumed that `OPTS[:profile]` will be set to a valid [config file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) profile name when `client_credentials` is called`.
+It's assumed that `OPTS[:profile]` will be set to a valid [config file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) profile name when `client_credentials` is called. You can also pass in a profile name like `client_credentials(my_profile)`.
 
 Currently supports:
 - Custom config file locations via `AWS_CONFIG_FILE`
