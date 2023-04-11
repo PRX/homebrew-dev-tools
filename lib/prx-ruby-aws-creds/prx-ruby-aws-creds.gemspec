@@ -9,9 +9,9 @@ Gem::Specification.new do |s|
   s.homepage = "https://github.com/PRX/homebrew-dev-tools/tree/main/lib/prx-ruby-aws-creds"
   s.license = "MIT"
 
-  s.add_runtime_dependency "inifile"
-  s.add_runtime_dependency "nokogiri"
-  s.add_runtime_dependency "aws-sdk-core"
-  s.add_runtime_dependency "aws-sdk-sso"
-  s.add_runtime_dependency "aws-sdk-sts"
+  s.add_dependency "inifile", "~> 3.0"
+  s.add_dependency "nokogiri"
+  s.add_dependency "aws-sdk-core"
+  s.add_dependency "aws-sdk-sso"
+  s.add_dependency "aws-sdk-sts"
 end
