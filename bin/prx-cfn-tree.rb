@@ -15,11 +15,11 @@ gemfile do
 end
 
 OPTS = Slop.parse do |o|
-  o.string '--profile', 'AWS profile', default: 'prx-legacy'
-  o.string '--region', 'Region (e.g., "us-east-1")'
-  o.string '--max-depth', 'Max depth (e.g., "us-east-1")', default: '10'
-  o.string '--stack-name', 'Stack name or ID (e.g., "infrastructure-cd-root-production")'
-  o.on '-h', '--help' do
+  o.string "--profile", "AWS profile", default: "prx-legacy"
+  o.string "--region", 'Region (e.g., "us-east-1")'
+  o.string "--max-depth", 'Max depth (e.g., "us-east-1")', default: "10"
+  o.string "--stack-name", 'Stack name or ID (e.g., "infrastructure-cd-root-production")'
+  o.on "-h", "--help" do
     puts o
     exit
   end
@@ -29,7 +29,7 @@ region = OPTS[:region]
 MAX_DEPTH = OPTS[:max_depth].to_i
 ROOT_STACK_NAME = OPTS[:stack_name]
 
-CLOUDFORMATION = Aws::CloudFormation::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: 'adaptive',)
+CLOUDFORMATION = Aws::CloudFormation::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: "adaptive")
 
 # Depth 0 is the root stack itself
 # Depth 1 is resources that belong to the root stack
@@ -43,14 +43,14 @@ def walk_stack_hierarchy(stack_id, depth = 0)
 
   depth += 1
 
-  if (depth <= MAX_DEPTH)
+  if depth <= MAX_DEPTH
     CLOUDFORMATION.list_stack_resources({
       stack_name: stack_id
     }).each do |resp|
       resp.stack_resource_summaries.each do |summary|
         count += 1
-        type = summary.resource_type == "AWS::CloudFormation::Stack" ? summary.resource_type.blue : summary.resource_type.green
-        puts "#{'│  ' * (depth - 1)}├─ #{type} #{summary.logical_resource_id}"
+        type = (summary.resource_type == "AWS::CloudFormation::Stack") ? summary.resource_type.blue : summary.resource_type.green
+        puts "#{"│  " * (depth - 1)}├─ #{type} #{summary.logical_resource_id}"
 
         if summary.resource_type == "AWS::CloudFormation::Stack"
           nested_count = walk_stack_hierarchy(summary.physical_resource_id, depth)
