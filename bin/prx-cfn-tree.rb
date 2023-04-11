@@ -16,9 +16,9 @@ end
 
 OPTS = Slop.parse do |o|
   o.string "--profile", "AWS profile", default: "prx-legacy"
-  o.string "--region", 'Region (e.g., "us-east-1")'
+  o.string "--region", 'Region (e.g., "us-east-1")', required: true
   o.string "--max-depth", 'Max depth (e.g., "us-east-1")', default: "10"
-  o.string "--stack-name", 'Stack name or ID (e.g., "infrastructure-cd-root-production")'
+  o.string "--stack-name", 'Stack name or ID (e.g., "infrastructure-cd-root-production")', required: true
   o.on "-h", "--help" do
     puts o
     exit

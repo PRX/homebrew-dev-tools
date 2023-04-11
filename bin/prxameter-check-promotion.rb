@@ -22,7 +22,7 @@ end
 
 OPTS = Slop.parse do |o|
   o.string "--profile", "AWS profile", default: "prx-legacy"
-  o.string "--region", 'Region (e.g., "us-east-1")'
+  o.string "--region", 'Region (e.g., "us-east-1")', required: true
   o.bool "--hide-matches", "Hide matching values"
   o.on "-h", "--help" do
     puts o
