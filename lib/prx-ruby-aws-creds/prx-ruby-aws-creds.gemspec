@@ -1,3 +1,6 @@
+lib = File.expand_path("../lib", __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
 Gem::Specification.new do |s|
   s.name = "prx-ruby-aws-creds"
   s.version = "0.1.3"
@@ -8,6 +11,8 @@ Gem::Specification.new do |s|
   s.files = ["lib/prx-ruby-aws-creds.rb"]
   s.homepage = "https://github.com/PRX/homebrew-dev-tools/tree/main/lib/prx-ruby-aws-creds"
   s.license = "MIT"
+
+  s.require_paths = ["lib"]
 
   s.add_dependency "inifile", "~> 3.0"
   s.add_dependency "nokogiri"
