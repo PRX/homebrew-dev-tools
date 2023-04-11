@@ -18,9 +18,11 @@ Use `RubyAwsCreds.client_credentials` when creating AWS SDK clients:
 client = Aws::SSM::Client.new(region: "us-east-1", credentials: RubyAwsCreds.client_credentials)
 ```
 
+`RubyAwsCreds.client_credentials` always returns an instance of `Aws::Credentials`.
+
 ## Other
 
-It's assumed that `OPTS[:profile]` will be set to a valid [config file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) profile name when `client_credentials` is called`.
+It's assumed that `OPTS[:profile]` will be set to a valid [config file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) profile name when `client_credentials` is called. You can also pass in a profile name like `client_credentials(my_profile)`.
 
 Currently supports:
 - Custom config file locations via `AWS_CONFIG_FILE`
