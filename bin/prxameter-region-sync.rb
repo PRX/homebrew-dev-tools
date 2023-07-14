@@ -39,7 +39,7 @@ destination_regions = OPTS[:destination_regions].split(",")
 clients = {}
 clients[source_region] = Aws::SSM::Client.new(region: source_region, credentials: PrxRubyAwsCreds.client_credentials)
 destination_regions.each do |region|
-  clients[region] = Aws::SSM::Client.new(region: region, credentials: client_credentials)
+  clients[region] = Aws::SSM::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials)
 end
 
 # Create a lookup table that includes all Parameter Store parameters from the
