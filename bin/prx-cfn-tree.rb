@@ -18,7 +18,7 @@ OPTS = Slop.parse do |o|
   o.string "--profile", "AWS profile", default: "prx-legacy"
   o.string "--region", 'Region (e.g., "us-east-1")', required: true
   o.string "--max-depth", 'Max depth (e.g., "us-east-1")', default: "10"
-  o.bool "--stacks-only", 'List only CloudFormation stacks'
+  o.bool "--stacks-only", "List only CloudFormation stacks"
   o.string "--stack-name", 'Stack name or ID (e.g., "infrastructure-cd-root-production")', required: true
   o.on "-h", "--help" do
     puts o
@@ -40,7 +40,7 @@ def walk_stack_hierarchy(stack_id, depth = 0)
   count = 0
 
   if depth == 0
-    puts "#{'AWS::CloudFormation::Stack'.blue} #{stack_id}"
+    puts "#{"AWS::CloudFormation::Stack".blue} #{stack_id}"
   end
 
   depth += 1

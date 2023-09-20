@@ -20,11 +20,11 @@ AWS_CONFIG_FILE = ENV["AWS_CONFIG_FILE"] || "#{Dir.home}/.aws/config"
 # rid of the fancy typecasting.
 class IniFile
   class Parser
-    def typecast( value )
+    def typecast(value)
       case value
-      when %r/\Atrue\z/i;  true
-      when %r/\Afalse\z/i; false
-      when %r/\A\s*\z/i;   nil
+      when %r{\Atrue\z}i then true
+      when %r{\Afalse\z}i then false
+      when %r{\A\s*\z}i then nil
       else
         unescape_value(value)
       end
