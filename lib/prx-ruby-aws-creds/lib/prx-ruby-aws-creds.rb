@@ -11,6 +11,27 @@ require "aws-sdk-sso"
 CACHE_DIRECTORY = "#{Dir.home}/.aws/ruby/cache"
 AWS_CONFIG_FILE = ENV["AWS_CONFIG_FILE"] || "#{Dir.home}/.aws/config"
 
+# Normally IniFile tries to be clever about detecting number values in the file
+# and casting them to Integers and Floats. This breaks on a value like
+# 048723829744, becuase Integer() tries to treat that as an octal, but fails
+# since it includes 8s and 9s, but Float(048723829744) treats it like a decimal
+# and returns 48723829744.0. Even if Integer() didn't fail it would drop the
+# leading zero. We need to just treat these values as strings, so this gets
+# rid of the fancy typecasting.
+class IniFile
+  class Parser
+    def typecast( value )
+      case value
+      when %r/\Atrue\z/i;  true
+      when %r/\Afalse\z/i; false
+      when %r/\A\s*\z/i;   nil
+      else
+        unescape_value(value)
+      end
+    end
+  end
+end
+
 class PrxRubyAwsCreds
   class << self
     # The cache key is based on the parameters used to request temporary
