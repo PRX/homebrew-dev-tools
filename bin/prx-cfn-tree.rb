@@ -18,6 +18,7 @@ OPTS = Slop.parse do |o|
   o.string "--profile", "AWS profile", default: "prx-legacy"
   o.string "--region", 'Region (e.g., "us-east-1")', required: true
   o.string "--max-depth", 'Max depth (e.g., "us-east-1")', default: "10"
+  o.bool "--stacks-only", 'List only CloudFormation stacks'
   o.string "--stack-name", 'Stack name or ID (e.g., "infrastructure-cd-root-production")', required: true
   o.on "-h", "--help" do
     puts o
@@ -27,6 +28,7 @@ end
 
 region = OPTS[:region]
 MAX_DEPTH = OPTS[:max_depth].to_i
+STACKS_ONLY = OPTS[:stacks_only]
 ROOT_STACK_NAME = OPTS[:stack_name]
 
 CLOUDFORMATION = Aws::CloudFormation::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: "adaptive")
@@ -38,7 +40,7 @@ def walk_stack_hierarchy(stack_id, depth = 0)
   count = 0
 
   if depth == 0
-    puts stack_id.blue
+    puts "#{'AWS::CloudFormation::Stack'.blue} #{stack_id}"
   end
 
   depth += 1
@@ -49,8 +51,10 @@ def walk_stack_hierarchy(stack_id, depth = 0)
     }).each do |resp|
       resp.stack_resource_summaries.each do |summary|
         count += 1
-        type = (summary.resource_type == "AWS::CloudFormation::Stack") ? summary.resource_type.blue : summary.resource_type.green
-        puts "#{"│  " * (depth - 1)}├─ #{type} #{summary.logical_resource_id}"
+        if summary.resource_type == "AWS::CloudFormation::Stack" || (summary.resource_type != "AWS::CloudFormation::Stack" && !STACKS_ONLY)
+          type = (summary.resource_type == "AWS::CloudFormation::Stack") ? summary.resource_type.blue : summary.resource_type.green
+          puts "#{"│  " * (depth - 1)}├─ #{type} #{summary.logical_resource_id}"
+        end
 
         if summary.resource_type == "AWS::CloudFormation::Stack"
           nested_count = walk_stack_hierarchy(summary.physical_resource_id, depth)
