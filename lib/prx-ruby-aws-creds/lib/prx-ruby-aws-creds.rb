@@ -80,14 +80,7 @@ class PrxRubyAwsCreds
       aws_config_file = IniFile.load(AWS_CONFIG_FILE)
       aws_config_file_section = aws_config_file["profile #{profile_name}"]
 
-      if aws_config_file["sso_session"]
-        sso_session_name = aws_config_file["sso_session"]
-        sso_session_section = aws_config_file["sso-session #{sso_session_name}"]
-
-        sso_start_url = sso_session_section["sso_start_url"]
-      else
-        sso_start_url = aws_config_file_section["sso_start_url"]
-      end
+      sso_start_url = aws_config_file_section["sso_session"] ? aws_config_file["sso-session #{aws_config_file_section["sso_session"]}"]["sso_start_url"] : aws_config_file_section["sso_start_url"]
 
       # The selected profile does not use SSO
       return if !sso_start_url
@@ -158,8 +151,9 @@ class PrxRubyAwsCreds
         # access token to get back a set of temporary credentials.
         # https://docs.aws.amazon.com/singlesignon/latest/PortalAPIReference/API_GetRoleCredentials.html
         # https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/SSO/Client.html#get_role_credentials-instance_method
+        sso_region = aws_config_file_section["sso_session"] ? aws_config_file["sso-session #{aws_config_file_section["sso_session"]}"]["sso_region"] : aws_config_file_section["sso_region"]
         opts = sso_get_role_options(profile_name)
-        sso = Aws::SSO::Client.new(region: aws_config_file_section["sso_region"])
+        sso = Aws::SSO::Client.new(region: sso_region)
         credentials = sso.get_role_credentials(opts)
 
         # Cache the credentials. The structure of this file doesn't exactly

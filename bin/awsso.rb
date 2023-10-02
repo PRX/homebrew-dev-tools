@@ -55,7 +55,7 @@ aws_config_file = IniFile.load(AWS_CONFIG_FILE)
 # Find the name of each profile that appears to use SSO
 sso_profile_names = []
 aws_config_file.each_section do |section|
-  if aws_config_file[section]["sso_start_url"]
+  if section.start_with?("profile") && (aws_config_file[section]["sso_start_url"] || aws_config_file[section]["sso_session"])
     sso_profile_names.push(section.gsub(/^profile /, ""))
   end
 end
@@ -82,10 +82,10 @@ if /^[0-9]+$/.match?(sso_profile_selection)
 
     # Get the config values from the INI file for the selected profile
     aws_config_file_section = aws_config_file["profile #{sso_selected_profile_name}"]
-    sso_region = aws_config_file_section["sso_region"]
+    sso_region = aws_config_file_section["sso_session"] ? aws_config_file["sso-session #{aws_config_file_section["sso_session"]}"]["sso_region"] : aws_config_file_section["sso_region"]
     account_id = aws_config_file_section["sso_account_id"]
     role_name = aws_config_file_section["sso_role_name"]
-    profile_start_url = aws_config_file_section["sso_start_url"]
+    profile_start_url = aws_config_file_section["sso_session"] ? aws_config_file["sso-session #{aws_config_file_section["sso_session"]}"]["sso_start_url"] : aws_config_file_section["sso_start_url"]
 
     # Look for an SSO access token in the cache
     sso_access_token = get_cached_sso_access_token(profile_start_url)
