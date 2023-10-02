@@ -80,11 +80,20 @@ class PrxRubyAwsCreds
       aws_config_file = IniFile.load(AWS_CONFIG_FILE)
       aws_config_file_section = aws_config_file["profile #{profile_name}"]
 
+      if aws_config_file["sso_session"]
+        sso_session_name = aws_config_file["sso_session"]
+        sso_session_section = aws_config_file["sso-session #{sso_session_name}"]
+
+        sso_start_url = sso_session_section["sso_start_url"]
+      else
+        sso_start_url = aws_config_file_section["sso_start_url"]
+      end
+
       # The selected profile does not use SSO
-      return if !aws_config_file_section["sso_start_url"]
+      return if !sso_start_url
 
       # Get the SSO start URL for the selected profile
-      profile_start_url = aws_config_file_section["sso_start_url"]
+      profile_start_url = sso_start_url
 
       sso_access_token = sso_get_cached_access_token(profile_start_url)
 
@@ -144,7 +153,7 @@ class PrxRubyAwsCreds
       aws_config_file = IniFile.load(AWS_CONFIG_FILE)
       aws_config_file_section = aws_config_file["profile #{profile_name}"]
 
-      if aws_config_file_section["sso_role_name"]
+      if aws_config_file_section["sso_role_name"] || aws_config_file_section["sso_session"]
         # For SSO profiles, call GetRoleCredentials with a role, account, and
         # access token to get back a set of temporary credentials.
         # https://docs.aws.amazon.com/singlesignon/latest/PortalAPIReference/API_GetRoleCredentials.html
