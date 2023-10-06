@@ -7,8 +7,8 @@ gemfile do
   source "https://rubygems.org"
   gem "awesome_print"
   gem "aws-sdk-ssm"
-  gem 'aws-sdk-cloudformation'
-  gem 'aws-sdk-ecs'
+  gem "aws-sdk-cloudformation"
+  gem "aws-sdk-ecs"
   gem "nokogiri"
   gem "terminal-table"
   gem "slop"
@@ -22,11 +22,11 @@ default_paths = ["/prx/global/Spire", "/prx/stag/Spire", "/prx/prod/Spire"]
 default_stack_names = ["infrastructure-cd-root-staging", "infrastructure-cd-root-production"]
 
 OPTS = Slop.parse do |o|
-  o.string '--profile', 'AWS profile', default: 'prx-legacy'
-  o.string '--region', 'Region (e.g., "us-east-1")'
+  o.string "--profile", "AWS profile", default: "prx-legacy"
+  o.string "--region", 'Region (e.g., "us-east-1")'
   o.string "--paths", 'Paths (e.g., "/foo,/bar")', default: default_paths.join(",")
-  o.string '--stack-names', 'Stack name or ID (e.g., "infrastructure-cd-root-production")', default: default_stack_names.join(",")
-  o.on '-h', '--help' do
+  o.string "--stack-names", 'Stack name or ID (e.g., "infrastructure-cd-root-production")', default: default_stack_names.join(",")
+  o.on "-h", "--help" do
     puts o
     exit
   end
@@ -36,16 +36,16 @@ paths = OPTS[:paths].split(",")
 stack_names = OPTS[:stack_names].split(",")
 region = OPTS[:region]
 
-CLOUDFORMATION = Aws::CloudFormation::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: 'adaptive')
-SSM = Aws::SSM::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: 'adaptive')
-ECS = Aws::ECS::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: 'adaptive')
+CLOUDFORMATION = Aws::CloudFormation::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: "adaptive")
+SSM = Aws::SSM::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: "adaptive")
+ECS = Aws::ECS::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: "adaptive")
 
 def find_params_in_stack_hierarchy(stack_id, stack_param_collecton, secrets_param_collection)
   # Get the full details of this stack, including the stack parameters
   stack_desc = CLOUDFORMATION.describe_stacks({stack_name: stack_id}).stacks[0]
 
   # Collect all the Parameter Store parameter names used in stack parameters for this stack
-  stack_param_collecton.concat(stack_desc[:parameters].filter { |p| !p[:resolved_value].nil?}.map {|p| p.parameter_value})
+  stack_param_collecton.concat(stack_desc[:parameters].filter { |p| !p[:resolved_value].nil? }.map { |p| p.parameter_value })
 
   # Walk through all the resources that belong to this stack.
   CLOUDFORMATION.list_stack_resources({
@@ -59,9 +59,9 @@ def find_params_in_stack_hierarchy(stack_id, stack_param_collecton, secrets_para
         # For ECS task definitions, get the task def details and extract the
         # parameter names used for container secrets
         arn = summary.physical_resource_id
-        task_def = ECS.describe_task_definition({task_definition: arn }).task_definition
+        task_def = ECS.describe_task_definition({task_definition: arn}).task_definition
         secrets = task_def.container_definitions[0].secrets
-        secrets_param_collection.concat(secrets.map {|s| s.value_from})
+        secrets_param_collection.concat(secrets.map { |s| s.value_from })
       end
     end
   end
@@ -94,7 +94,7 @@ end
 
 other_regions = {
   "us-east-1" => "us-west-2",
-  "us-west-2" => "us-east-1",
+  "us-west-2" => "us-east-1"
 }
 
 # For each parameter found by searching Parameter Store, look for a matching
