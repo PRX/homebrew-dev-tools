@@ -2,5 +2,7 @@
 
 source "https://rubygems.org"
 
-gem "standard", "~> 1.26"
+ruby "3.2.2"
+
+gem "standard"
 gem "rake"

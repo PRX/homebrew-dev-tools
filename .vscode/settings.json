@@ -2,6 +2,6 @@
   "[ruby]": {
     "editor.defaultFormatter": "testdouble.vscode-standard-ruby",
     "editor.formatOnSave": true,
-    "editor.formatOnSaveMode": "file",
+    "editor.formatOnSaveMode": "file"
   }
 }

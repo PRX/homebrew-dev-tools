@@ -24,8 +24,8 @@ OPTS = Slop.parse do |o|
   end
 end
 
-REGIONS = OPTS[:regions].split(',')
-DATA_PROFILES = OPTS[:data_account_profiles].split(',')
+REGIONS = OPTS[:regions].split(",")
+DATA_PROFILES = OPTS[:data_account_profiles].split(",")
 
 # Savings plans are global
 # savings_plans = Aws::SavingsPlans::Client.new(region: "us-east-1", credentials: PrxRubyAwsCreds.client_credentials("prx-main"), retry_mode: "adaptive")
@@ -37,10 +37,8 @@ DATA_PROFILES = OPTS[:data_account_profiles].split(',')
 # All reservations are made in prx-main, but instances can be found in a
 # variety of accounts.
 ec_reservations = []
-claimed_ec_reservation_ids = []
 ec_instances = []
 rds_reservations = []
-claimed_rds_reservation_ids = []
 rds_instances = []
 REGIONS.each do |region|
   # Get all active RDS reservations
@@ -66,7 +64,7 @@ end
 
 # Expand RDS reservations into a list the reflects total instance count
 expanded_rds_reservations = []
-rds_reservations.filter{|r| r.state == "active"}.each do |res|
+rds_reservations.filter { |r| r.state == "active" }.each do |res|
   res.db_instance_count.times do |i|
     expanded_rds_reservations << {
       db_instance_class: res.db_instance_class,
@@ -80,7 +78,7 @@ end
 
 # Expand EC reservations into a list the reflects total node count
 expanded_ec_reservations = []
-ec_reservations.filter{|r| r.state == "active"}.each do |res|
+ec_reservations.filter { |r| r.state == "active" }.each do |res|
   res.cache_node_count.times do |i|
     expanded_ec_reservations << {
       cache_node_type: res.cache_node_type, # e.g., cache.t3.micro
@@ -103,7 +101,7 @@ rds_instances.each do |instance|
   region = arn.split(":")[3]
 
   reserved = "No".red
-  idx = expanded_rds_reservations.find_index {|r| region == r[:region] && instance.engine == r[:product_description] && instance.db_instance_class == r[:db_instance_class] && instance.multi_az == r[:multi_az] }
+  idx = expanded_rds_reservations.find_index { |r| region == r[:region] && instance.engine == r[:product_description] && instance.db_instance_class == r[:db_instance_class] && instance.multi_az == r[:multi_az] }
   if idx
     reserved = "Yes".green
     expanded_rds_reservations.delete_at(idx)
@@ -125,7 +123,7 @@ ec_instances.each do |instance|
     region = arn.split(":")[3]
 
     reserved = "No".red
-    idx = expanded_ec_reservations.find_index {|r| instance.engine == r[:product_description] && region == r[:region] && instance.cache_node_type == r[:cache_node_type] }
+    idx = expanded_ec_reservations.find_index { |r| instance.engine == r[:product_description] && region == r[:region] && instance.cache_node_type == r[:cache_node_type] }
     if idx
       reserved = "Yes".green
       expanded_ec_reservations.delete_at(idx)
