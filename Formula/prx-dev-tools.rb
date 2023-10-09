@@ -1,8 +1,8 @@
 class PrxDevTools < Formula
   desc "PRX developer tools"
   homepage "https://github.com/PRX/homebrew-dev-tools"
-  url "https://github.com/PRX/homebrew-dev-tools/archive/refs/tags/v0.2.2.tar.gz"
-  sha256 "9eef255e516de31082862e4b1e206a6ae307e41a1e0c8c85af9c013e2442aa63"
+  url "https://github.com/PRX/homebrew-dev-tools/archive/refs/tags/v0.2.3.tar.gz"
+  sha256 "b10d05e622a07c08cbf20b1135fabffdf502caf5abce77f979cc0b6ac6be05d4"
   license ""
 
   def install
