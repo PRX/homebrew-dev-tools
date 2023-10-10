@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
-# Prints an ASCII tree of some CloudFormation stack hierarchy, starting with a
-# given stack.
+# Shows some basic information about AWS resource reservations
 
 require "bundler/inline"
 
