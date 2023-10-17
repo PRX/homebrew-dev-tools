@@ -1,0 +1,7 @@
+default_ignores: false
+ignore:
+  - ".git/**/*"
+  - "node_modules/**/*"
+  - "vendor/**/*"
+  - "db/schema.rb"
+  - "tmp/**/*"
