@@ -57,7 +57,16 @@ REGIONS.each do |region|
   # Get all ElastiCache instances
   DATA_PROFILES.each do |profile|
     elasticache = Aws::ElastiCache::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials(profile), retry_mode: "adaptive")
-    ec_instances.push(*elasticache.describe_cache_clusters({}).cache_clusters)
+    clusters = elasticache.describe_cache_clusters({}).cache_clusters
+
+    # Fetch the tags for this cluster and stick them in a struct attribute that
+    # we don't care about
+    clusters.each do |cluster|
+      tags = elasticache.list_tags_for_resource({resource_name: cluster.arn})
+      cluster.snapshot_retention_limit = tags.tag_list
+    end
+
+    ec_instances.push(*clusters)
   end
 end
 
@@ -88,7 +97,7 @@ ec_reservations.filter { |r| r.state == "active" }.each do |res|
   end
 end
 
-headings = ["Service", "Type", "Region", "Class", "ID", "Reserved?"]
+headings = ["Service", "Type", "Region", "Class", "ID", "Reserved?", "Env", "App"]
 rows = []
 
 # For each DB instance that's in use try to find a reservation from the
@@ -109,7 +118,16 @@ rds_instances.each do |instance|
   instance_class = instance.db_instance_class
   instance_class += " #{instance.multi_az}" if instance.multi_az
 
-  rows << ["RDS", instance.engine, region, instance_class, instance.db_instance_identifier, reserved]
+  env = instance.tag_list.find { |t| t.key == "prx:ops:environment" }&.value || ""
+  env_label = if env == "Production"
+    env.[](0..3).blue
+  else
+    env.[](0..3).yellow
+  end
+
+  app = instance.tag_list.find { |t| t.key == "prx:dev:application" }&.value || ""
+
+  rows << ["RDS", instance.engine, region, instance_class, instance.db_instance_identifier, reserved, env_label, app]
 end
 
 # For each node that's in use (an instance or cluster can have multiple nodes),
@@ -128,7 +146,18 @@ ec_instances.each do |instance|
       expanded_ec_reservations.delete_at(idx)
     end
 
-    rows << ["ElastiCache", instance.engine, region, instance.cache_node_type, instance.cache_cluster_id, reserved]
+    # snapshot_retention_limit is used to hold the tag_list
+    env = instance.snapshot_retention_limit.find { |t| t.key == "prx:ops:environment" }&.value || ""
+    env_label = if env == "Production"
+      env.[](0..3).blue
+    else
+      env.[](0..3).yellow
+    end
+
+    # snapshot_retention_limit is used to hold the tag_list
+    app = instance.snapshot_retention_limit.find { |t| t.key == "prx:dev:application" }&.value || ""
+
+    rows << ["ElastiCache", instance.engine, region, instance.cache_node_type, instance.cache_cluster_id, reserved, env_label, app]
   end
 end
 
