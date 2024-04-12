@@ -108,10 +108,12 @@ rds_instances.each do |instance|
   arn = instance.db_instance_arn
   region = arn.split(":")[3]
 
-  reserved = "No".red
+  price_intent = instance.tag_list.find { |t| t.key == "prx:billing:pricing-intent" }&.value || ""
+
+  reserved = (price_intent == "On-Demand") ? "No (don't)".yellow : "No".red
   idx = expanded_rds_reservations.find_index { |r| region == r[:region] && instance.engine == r[:product_description] && instance.db_instance_class == r[:db_instance_class] && instance.multi_az == r[:multi_az] }
   if idx
-    reserved = "Yes".green
+    reserved = (price_intent == "Reserved") ? "Yes".green : "Yes".blue
     expanded_rds_reservations.delete_at(idx)
   end
 
@@ -139,10 +141,13 @@ ec_instances.each do |instance|
     arn = instance.arn
     region = arn.split(":")[3]
 
-    reserved = "No".red
+    # snapshot_retention_limit is used to hold the tag_list
+    price_intent = instance.snapshot_retention_limit.find { |t| t.key == "prx:billing:pricing-intent" }&.value || ""
+
+    reserved = (price_intent == "On-Demand") ? "No (on-demand)".yellow : "No".red
     idx = expanded_ec_reservations.find_index { |r| instance.engine == r[:product_description] && region == r[:region] && instance.cache_node_type == r[:cache_node_type] }
     if idx
-      reserved = "Yes".green
+      reserved = (price_intent == "Reserved") ? "Yes".green : "Yes".blue
       expanded_ec_reservations.delete_at(idx)
     end
 
