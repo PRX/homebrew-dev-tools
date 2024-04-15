@@ -79,7 +79,9 @@ rds_reservations.filter { |r| r.state == "active" }.each do |res|
       product_description: res.product_description,
       reserved_db_instance_arn: res.reserved_db_instance_arn,
       region: res.reserved_db_instance_arn.split(":")[3],
-      multi_az: res.multi_az
+      multi_az: res.multi_az,
+      start_time: res.start_time,
+      duration: res.duration
     }
   end
 end
@@ -92,12 +94,14 @@ ec_reservations.filter { |r| r.state == "active" }.each do |res|
       cache_node_type: res.cache_node_type, # e.g., cache.t3.micro
       product_description: res.product_description, # e.g., redis
       reservation_arn: res.reservation_arn,
-      region: res.reservation_arn.split(":")[3]
+      region: res.reservation_arn.split(":")[3],
+      start_time: res.start_time,
+      duration: res.duration
     }
   end
 end
 
-headings = ["Service", "Type", "Region", "Class", "ID", "Reserved?", "Env", "App"]
+headings = ["Service", "Type", "Region", "Class", "ID", "Reserved?", "Days", "Env", "App"]
 rows = []
 
 # For each DB instance that's in use try to find a reservation from the
@@ -111,9 +115,15 @@ rds_instances.each do |instance|
   price_intent = instance.tag_list.find { |t| t.key == "prx:billing:pricing-intent" }&.value || ""
 
   reserved = (price_intent == "On-Demand") ? "No (don't)".yellow : "No".red
+  days = "-"
   idx = expanded_rds_reservations.find_index { |r| region == r[:region] && instance.engine == r[:product_description] && instance.db_instance_class == r[:db_instance_class] && instance.multi_az == r[:multi_az] }
   if idx
     reserved = (price_intent == "Reserved") ? "Yes".green : "Yes".blue
+
+    res = expanded_rds_reservations[idx]
+    days = (((res[:start_time] + res[:duration]) - Time.now) / 24 / 60 / 60).round(1)
+    days = days.to_s.red if days < 30
+
     expanded_rds_reservations.delete_at(idx)
   end
 
@@ -129,7 +139,7 @@ rds_instances.each do |instance|
 
   app = instance.tag_list.find { |t| t.key == "prx:dev:application" }&.value || ""
 
-  rows << ["RDS", instance.engine, region, instance_class, instance.db_instance_identifier, reserved, env_label, app]
+  rows << ["RDS", instance.engine, region, instance_class, instance.db_instance_identifier, reserved, days, env_label, app]
 end
 
 # For each node that's in use (an instance or cluster can have multiple nodes),
@@ -145,9 +155,15 @@ ec_instances.each do |instance|
     price_intent = instance.snapshot_retention_limit.find { |t| t.key == "prx:billing:pricing-intent" }&.value || ""
 
     reserved = (price_intent == "On-Demand") ? "No (on-demand)".yellow : "No".red
+    days = "-"
     idx = expanded_ec_reservations.find_index { |r| instance.engine == r[:product_description] && region == r[:region] && instance.cache_node_type == r[:cache_node_type] }
     if idx
       reserved = (price_intent == "Reserved") ? "Yes".green : "Yes".blue
+
+      res = expanded_ec_reservations[idx]
+      days = (((res[:start_time] + res[:duration]) - Time.now) / 24 / 60 / 60).round(1)
+      days = days.to_s.red if days < 30
+
       expanded_ec_reservations.delete_at(idx)
     end
 
@@ -162,7 +178,7 @@ ec_instances.each do |instance|
     # snapshot_retention_limit is used to hold the tag_list
     app = instance.snapshot_retention_limit.find { |t| t.key == "prx:dev:application" }&.value || ""
 
-    rows << ["ElastiCache", instance.engine, region, instance.cache_node_type, instance.cache_cluster_id, reserved, env_label, app]
+    rows << ["ElastiCache", instance.engine, region, instance.cache_node_type, instance.cache_cluster_id, reserved, days, env_label, app]
   end
 end
 
