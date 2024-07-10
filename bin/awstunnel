@@ -35,30 +35,38 @@ fi
 if [[ $ENV == "prod" ]]; then
   MYSQL_LOCAL_PORT=3307
   POSTGRES_LOCAL_PORT=5433
+  CLICKHOUSE1_LOCAL_PORT=8124
+  CLICKHOUSE2_LOCAL_PORT=9001
   CASTLE_LOCAL_PORT=5434
   REDIS_LOCAL_PORT=6380
 else
   MYSQL_LOCAL_PORT=3309
   POSTGRES_LOCAL_PORT=5435
+  CLICKHOUSE1_LOCAL_PORT=8125
+  CLICKHOUSE2_LOCAL_PORT=9002
   CASTLE_LOCAL_PORT=5436
   REDIS_LOCAL_PORT=6382
 fi
 
 # print configuration
 echo ""
-echo "+------+----------------------------+"
-echo "| Port | Tunnel Destination         |"
-echo "+------+----------------------------+"
-[[ ! -z "$PRX_SHARED_MYSQL_HOST" ]] && echo "| $MYSQL_LOCAL_PORT | $(printf %-26s "Shared Mysql $PRX_ENVIRONMENT") |"
-[[ ! -z "$PRX_SHARED_POSTGRES_HOST" ]] && echo "| $POSTGRES_LOCAL_PORT | $(printf %-26s "Shared Postgres $PRX_ENVIRONMENT") |"
-[[ ! -z "$PRX_CASTLE_POSTGRES_HOST" ]] && echo "| $CASTLE_LOCAL_PORT | $(printf %-26s "Castle Postgres $PRX_ENVIRONMENT") |"
-[[ ! -z "$PRX_SHARED_REDIS_HOST" ]] && echo "| $REDIS_LOCAL_PORT | $(printf %-26s "Shared Redis $PRX_ENVIRONMENT") |"
-echo "+------+----------------------------+"
+echo "+------+------------------------------+"
+echo "| Port | Tunnel Destination           |"
+echo "+------+------------------------------+"
+[[ ! -z "$PRX_SHARED_MYSQL_HOST" ]] && echo "| $MYSQL_LOCAL_PORT | $(printf %-26s "Shared Mysql $PRX_ENVIRONMENT")   |"
+[[ ! -z "$PRX_SHARED_POSTGRES_HOST" ]] && echo "| $POSTGRES_LOCAL_PORT | $(printf %-26s "Shared Postgres $PRX_ENVIRONMENT")   |"
+[[ ! -z "$PRX_SHARED_CLICKHOUSE_HOST" ]] && echo "| $CLICKHOUSE1_LOCAL_PORT | $(printf %-26s "Shared Clickhouse $PRX_ENVIRONMENT") |"
+[[ ! -z "$PRX_SHARED_CLICKHOUSE_HOST" ]] && echo "| $CLICKHOUSE2_LOCAL_PORT | $(printf %-26s "Shared ClickHouse $PRX_ENVIRONMENT") |"
+[[ ! -z "$PRX_CASTLE_POSTGRES_HOST" ]] && echo "| $CASTLE_LOCAL_PORT | $(printf %-26s "Castle Postgres $PRX_ENVIRONMENT")   |"
+[[ ! -z "$PRX_SHARED_REDIS_HOST" ]] && echo "| $REDIS_LOCAL_PORT | $(printf %-26s "Shared Redis $PRX_ENVIRONMENT")   |"
+echo "+------+------------------------------+"
 
 # time for tunneling
 ssh $SSH_USER@$JUMP_HOST -N \
   $( [[ ! -z "$PRX_SHARED_MYSQL_HOST" ]] && printf %s "-L $MYSQL_LOCAL_PORT:$PRX_SHARED_MYSQL_HOST:$PRX_SHARED_MYSQL_PORT" ) \
   $( [[ ! -z "$PRX_SHARED_POSTGRES_HOST" ]] && printf %s "-L $POSTGRES_LOCAL_PORT:$PRX_SHARED_POSTGRES_HOST:$PRX_SHARED_POSTGRES_PORT" ) \
+  $( [[ ! -z "$PRX_SHARED_CLICKHOUSE_HOST" ]] && printf %s "-L $CLICKHOUSE1_LOCAL_PORT:$PRX_SHARED_CLICKHOUSE_HOST:8123" ) \
+  $( [[ ! -z "$PRX_SHARED_CLICKHOUSE_HOST" ]] && printf %s "-L $CLICKHOUSE2_LOCAL_PORT:$PRX_SHARED_CLICKHOUSE_HOST:9000" ) \
   $( [[ ! -z "$PRX_CASTLE_POSTGRES_HOST" ]] && printf %s "-L $CASTLE_LOCAL_PORT:$PRX_CASTLE_POSTGRES_HOST:$PRX_CASTLE_POSTGRES_PORT" ) \
   $( [[ ! -z "$PRX_SHARED_REDIS_HOST" ]] && printf %s "-L $REDIS_LOCAL_PORT:$PRX_SHARED_REDIS_HOST:$PRX_SHARED_REDIS_PORT" ) \
   $SSH_OPTS
