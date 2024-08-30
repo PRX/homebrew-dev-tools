@@ -40,12 +40,30 @@ CLOUDFORMATION = Aws::CloudFormation::Client.new(region: region, credentials: Pr
 SSM = Aws::SSM::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: "adaptive")
 ECS = Aws::ECS::Client.new(region: region, credentials: PrxRubyAwsCreds.client_credentials, retry_mode: "adaptive")
 
+# Find all Parameter Store parameters that exist under the given paths.
+# This is a single list of strings, which are the paramater names,
+# e.g., ["/prx/Global/Spire/foo", "/prx/Global/Spire/bar"]
+ssm_parameter_names = []
+paths.each do |path|
+  SSM.get_parameters_by_path({path: path, recursive: true, with_decryption: true}).each do |resp|
+    parameters = resp[:parameters]
+
+    parameters.each do |parameter|
+      ssm_parameter_names.push(parameter.name)
+    end
+  end
+end
+
 def find_params_in_stack_hierarchy(stack_id, stack_param_collecton, secrets_param_collection)
   # Get the full details of this stack, including the stack parameters
   stack_desc = CLOUDFORMATION.describe_stacks({stack_name: stack_id}).stacks[0]
 
   # Collect all the Parameter Store parameter names used in stack parameters for this stack
-  stack_param_collecton.concat(stack_desc[:parameters].filter { |p| !p[:resolved_value].nil? }.map { |p| p.parameter_value })
+  # Parameters that are NoEcho will return "****" for both the resolved value _and_
+  # the parameter value, which is the name of the parameter in Parameter Store,
+  # so collect the CloudFormation parameter name for those instead.
+  stack_param_collecton.concat(stack_desc[:parameters].filter { |p| !p[:resolved_value].nil? && p[:resolved_value] != "****" }.map { |p| p.parameter_value })
+  stack_param_collecton.concat(stack_desc[:parameters].filter { |p| p[:resolved_value] == "****" }.map { |p| "NO_ECHO :: #{p.parameter_key}" })
 
   # Walk through all the resources that belong to this stack.
   CLOUDFORMATION.list_stack_resources({
@@ -78,20 +96,6 @@ end
 
 all_in_use_paramter_names = [].concat(ecs_secrets_parameter_names, cfn_stack_parameter_names).uniq
 
-# Find all Parameter Store parameters that exist under the given paths.
-# This is a single list of strings, which are the paramater names,
-# e.g., ["/prx/Global/Spire/foo", "/prx/Global/Spire/bar"]
-ssm_parameter_names = []
-paths.each do |path|
-  SSM.get_parameters_by_path({path: path, recursive: true, with_decryption: true}).each do |resp|
-    parameters = resp[:parameters]
-
-    parameters.each do |parameter|
-      ssm_parameter_names.push(parameter.name)
-    end
-  end
-end
-
 other_regions = {
   "us-east-1" => "us-west-2",
   "us-west-2" => "us-east-1"
@@ -103,13 +107,28 @@ other_regions = {
 puts
 puts
 puts "Unused Parameter Store parameters"
-puts "  - Any stack parameters set to NoEcho will also appear here"
-puts "  - Parameters for other regions that match a parameter for #{region} are excluded, even though they are unused in #{region}"
+puts "  - If an SSM parameter is only used by a CloudFormation parameter that is set to NoEcho, it will be listed here (i.e., false positive). Look for a matching entry below."
+puts "  - Parameters for other regions that match a parameter for #{region} are gray; they are unused in #{region} but that is expected"
+puts "  - Parameters for staging-only services will be listed, but that is probably expected"
+puts
 ssm_parameter_names.each do |name|
+  # Don't print this SSM parameter name if we found it in use somewhere in
+  # CloudFormation or ECS
   next if all_in_use_paramter_names.include?(name)
 
+  # TODO This only works for 2 regions at the moment
+  # If the SSM parameter name appears to be a region-specific parameter, look
+  # to see if it is for another region (i.e., not the region being audited).
+  # Region-specific parameters are sychronized to all regions, for redundancy,
+  # but they are only used in regions they pertain to, so it is expected that
+  # they will be unused in other regions.
+  # List them here, but color them gray, as long as the associated parameter
+  # for the region being audited is in use.
   if name.include?("/#{other_regions[region]}/")
-    next if all_in_use_paramter_names.include?(name.sub("/#{other_regions[region]}/", "/#{region}/"))
+    if all_in_use_paramter_names.include?(name.sub("/#{other_regions[region]}/", "/#{region}/"))
+      puts name.gray
+      next
+    end
   end
 
   puts name
@@ -120,9 +139,24 @@ end
 # not in an expected path, and might need to be moved
 puts
 puts "Out-of-band parameters (consider moving these to a different path)"
+puts "  - If an SSM parameter is only used by a CloudFormation parameter that is set to NoEcho, it will be listed here (i.e., false positive). Look for a matching entry above."
+puts
 all_in_use_paramter_names.each do |name|
+  # Don't print this CloudFormation or ECS parameter if we found a match for it
+  # in the Parameter Store paths that we checked
   next if ssm_parameter_names.include?(name)
-  next if name.start_with?("/aws/")
+
+  if name.start_with?("NO_ECHO :: ")
+    # For NoEcho CloudFormation parameters, we don't know the exact SSM
+    # parameter name they are using, so there's no way to match them. List them
+    # here for manual audit.
+    puts name.purple
+    next
+  elsif name.start_with?("/aws/")
+    # AWS-provided SSM parameters can't be in the wrong place, so ignore them.
+    puts name.gray
+    next
+  end
 
   puts name
 end
