@@ -10,6 +10,7 @@ class PrxDevTools < Formula
     bin.install "bin/awsso.rb" => "awsso"
     bin.install "bin/awstunnel"
     bin.install "bin/prx-cfn-tree.rb" => "prx-cfn-tree"
+    bin.install "bin/prx-dovetail-regions.rb" => "prx-dovetail-regions"
     bin.install "bin/prx-empty-log-groups.rb" => "prx-empty-log-groups"
     bin.install "bin/prx-github-repo-audit.rb" => "prx-github-repo-audit"
     bin.install "bin/prx-immortal-log-groups.rb" => "prx-immortal-log-groups"
