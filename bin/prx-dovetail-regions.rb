@@ -13,6 +13,7 @@ end
 
 OPTS = Slop.parse do |o|
   o.string "-p", "--profile", "AWS profile", default: "prx-legacy-route53"
+  o.string "-r", "--region", 'Region (e.g., "us-east-1")', default: "us-east-1"
   o.string "-e", "--environment", 'E.g. "production" or "staging"', required: true
   o.string "-c", "--change", 'Change dovetail regions (e.g., "us-east-1" or "all")', default: nil
   o.on "-h", "--help" do
@@ -55,7 +56,7 @@ creds =
   end
 
 # find hosted zone
-client = Aws::Route53::Client.new(credentials: creds, retry_mode: "adaptive")
+client = Aws::Route53::Client.new(region: OPTS[:region], credentials: creds, retry_mode: "adaptive")
 res = client.list_hosted_zones_by_name(dns_name: "#{ZONE_NAME}.")
 zone_id = res.hosted_zones&.first&.id
 abort "Hosted zone '#{ZONE_NAME}' not found!".red unless zone_id
