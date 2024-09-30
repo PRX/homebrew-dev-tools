@@ -48,7 +48,7 @@ CHANGE =
 creds =
   begin
     PrxRubyAwsCreds.client_credentials
-  rescue => e
+  rescue
     puts "Unable to get AWS client credentials!".red
     puts "\nDid you add a #{"[profile prx-legacy-route53]".yellow} to your ~/.aws/config?"
     exit 1
@@ -85,13 +85,13 @@ puts "A    --> #{CHANGE.green}."
 puts "AAAA --> #{CHANGE.green}."
 
 print "\nProceed with DNS changes? (y/n) "
-exit unless STDIN.gets.chomp.strip == "y"
+exit unless $stdin.gets.chomp.strip == "y"
 
 print "Really? You're sure this won't just make things worse? (aye/nay) "
-exit unless STDIN.gets.chomp.strip == "aye"
+exit unless $stdin.gets.chomp.strip == "aye"
 
 print "You know, Fixed and Failure both start out the same way - proceed anyways? (yep/nope) "
-exit unless STDIN.gets.chomp.strip == "yep"
+exit unless $stdin.gets.chomp.strip == "yep"
 
 batch = {
   changes: [
