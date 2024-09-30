@@ -85,6 +85,12 @@ puts "-" * (8 + ALIAS.length)
 puts "A    --> #{CHANGE.green}."
 puts "AAAA --> #{CHANGE.green}."
 
+if OPTS[:change] == "all"
+  puts "\nThis will #{"balance".green} all dovetail traffic/processing between #{"all".green} regions"
+else
+  puts "\nThis will move all dovetail traffic/processing to the #{OPTS[:change].green} region"
+end
+
 print "\nProceed with DNS changes? (y/n) "
 exit unless $stdin.gets.chomp.strip == "y"
 
