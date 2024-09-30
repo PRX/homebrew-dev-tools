@@ -67,8 +67,8 @@ aaaa_rec = res.resource_record_sets.find { |r| r.name == "#{ALIAS}." && r.type =
 abort "Missing A record for #{ALIAS}".red unless a_rec
 abort "Missing AAAA record for #{ALIAS}".red unless aaaa_rec
 
-puts "Current"
-puts "-------"
+puts "Current #{ALIAS}"
+puts "-" * (8 + ALIAS.length)
 puts "A    --> #{a_rec.alias_target.dns_name.blue}"
 puts "AAAA --> #{aaaa_rec.alias_target.dns_name.blue}"
 abort "Mismatching A/AAAA records!".red if a_rec.alias_target.dns_name != aaaa_rec.alias_target.dns_name
@@ -79,8 +79,8 @@ if a_rec.alias_target.dns_name == "#{CHANGE}."
   exit
 end
 
-puts "\nChanges"
-puts "-------"
+puts "\nChanges #{ALIAS}"
+puts "-" * (8 + ALIAS.length)
 puts "A    --> #{CHANGE.green}."
 puts "AAAA --> #{CHANGE.green}."
 
