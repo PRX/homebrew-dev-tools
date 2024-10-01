@@ -15,7 +15,7 @@ OPTS = Slop.parse do |o|
   o.string "-p", "--profile", "AWS profile", default: "prx-legacy-route53"
   o.string "-r", "--region", 'Region (e.g., "us-east-1")', default: "us-east-1"
   o.string "-e", "--environment", 'E.g. "production" or "staging"', required: true
-  o.string "-c", "--change", 'Set region(s) for dovetail router to serve in (e.g., "us-east-1" or "all")', default: nil
+  o.string "-c", "--change", 'Set region(s) for Dovetail Router to serve in (e.g., "us-east-1" or "all")', default: nil
   o.on "-h", "--help" do
     puts o
     exit
@@ -86,9 +86,9 @@ puts "A    --> #{CHANGE.green}."
 puts "AAAA --> #{CHANGE.green}."
 
 if OPTS[:change] == "all"
-  puts "\nThis will #{"balance".green} all dovetail traffic/processing between #{"all".green} regions"
+  puts "\nThis will #{"balance".green} all Dovetail traffic/processing between #{"all".green} regions"
 else
-  puts "\nThis will move all dovetail traffic/processing to the #{OPTS[:change].green} region"
+  puts "\nThis will move all Dovetail traffic/processing to the #{OPTS[:change].green} region"
 end
 
 print "\nProceed with DNS changes? (y/n) "
