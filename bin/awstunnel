@@ -1,7 +1,7 @@
 #!/bin/bash
 PRX_DEFAULT_REGION=us-east-1
 SSH_USER=ec2-user
-SSH_OPTS="-o StrictHostKeyChecking=accept-new"
+SSH_OPTS="-o StrictHostKeyChecking=accept-new -C"
 [[ ! -z $PRX_SSH_KEY ]] && SSH_OPTS="$SSH_OPTS -i $PRX_SSH_KEY"
 [[ ! -z $PRX_AWS_PROFILE ]] && export AWS_PROFILE="$PRX_AWS_PROFILE"
 
