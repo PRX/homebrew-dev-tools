@@ -7,9 +7,9 @@ SSH_OPTS="-o StrictHostKeyChecking=accept-new"
 
 function usage() {
   echo "Usage:"
-  echo "  awssh <ec2-instance-id> --region [aws-region]"
-  echo "  awssh <stag|prod> <service> --region [aws-region]"
-  echo "  awssh <stag|prod> <service> <command> --region [aws-region]"
+  echo "  awssh <ec2-instance-id> [--region <aws-region>]"
+  echo "  awssh <stag|prod> <service> [--region <aws-region>]"
+  echo "  awssh <stag|prod> <service> [<command>] [--region <aws-region>]"
   echo ""
   echo "Examples:"
   echo "  awssh i-1234567890"
@@ -18,7 +18,7 @@ function usage() {
   echo "  awssh stag cms host"
   echo ""
   echo "Notes:"
-  echo "  command must be a valid ./bin/application - defaults to /bin/ash"
+  echo "  <command> must be a valid ./bin/application - defaults to /bin/ash"
   echo "  using command = \"host\", you'll get a shell in the host ec2 server"
   exit 1
 }
