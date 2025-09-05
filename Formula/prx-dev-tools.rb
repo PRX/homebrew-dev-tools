@@ -6,6 +6,7 @@ class PrxDevTools < Formula
   license ""
 
   def install
+    bin.install "bin/awsesh.rb" => "awsesh"
     bin.install "bin/awssh"
     bin.install "bin/awsso.rb" => "awsso"
     bin.install "bin/awstunnel"
