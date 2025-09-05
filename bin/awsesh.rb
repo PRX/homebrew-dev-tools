@@ -64,7 +64,7 @@ def show_wizard
       resp.reservations.each do |reservation|
         reservation.instances.each do |instance|
           instance_selection_hash[i] = instance.instance_id
-          instance_name = instance.tags.find{|i| i.key == "Name" }&.value
+          instance_name = instance.tags.find { |i| i.key == "Name" }&.value
 
           puts "  #{i}. #{instance.instance_id}: #{colorize_label(instance_name) || "(No name)"}"
           i += 1
@@ -144,18 +144,7 @@ def show_wizard
       service_selection = $stdin.gets.chomp
       puts
 
-      unless service_selection.empty?
-        # Use ECS Exec to connect to a task for the chosen service
-
-        service_arn = service_selection_hash[service_selection.to_i]
-
-        puts
-        puts "Connecting to a task for #{service_arn.split("/").last.greenish}"
-        puts
-
-        some_task_arn = ecs.list_tasks({cluster: cluster_arn, service_name: service_arn}).task_arns.first
-        exec(%Q(aws ecs execute-command --region #{OPTS[:region]} --profile #{OPTS[:profile]} --cluster "#{cluster_arn}" --task "#{some_task_arn}" --interactive --command "/bin/bash"))
-      else
+      if service_selection.empty?
         # Find and connect to an EC2 instance for the chosen service
         print "Connect to an EC2 instance running service: "
         service_selection2 = $stdin.gets.chomp
@@ -173,11 +162,21 @@ def show_wizard
         puts "Connecting to EC2 instance #{some_ec2_instance_id.greenish}"
         puts
         exec("aws ssm start-session --target #{some_ec2_instance_id} --region #{OPTS[:region]} --profile #{OPTS[:profile]}")
+      else
+        # Use ECS Exec to connect to a task for the chosen service
+
+        service_arn = service_selection_hash[service_selection.to_i]
+
+        puts
+        puts "Connecting to a task for #{service_arn.split("/").last.greenish}"
+        puts
+
+        some_task_arn = ecs.list_tasks({cluster: cluster_arn, service_name: service_arn}).task_arns.first
+        exec(%(aws ecs execute-command --region #{OPTS[:region]} --profile #{OPTS[:profile]} --cluster "#{cluster_arn}" --task "#{some_task_arn}" --interactive --command "/bin/bash"))
       end
     end
   end
 end
-
 
 if OPTS[:instance]
   # Connect directly to an instance if --instance is provided
