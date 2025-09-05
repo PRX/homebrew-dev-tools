@@ -51,7 +51,7 @@ DEPENDENCIES
   standard
 
 RUBY VERSION
-   ruby 3.3.5p100
+   ruby 3.4.5p51
 
 BUNDLED WITH
-   2.5.20
+   2.7.1
