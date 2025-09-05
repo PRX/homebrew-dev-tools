@@ -28,9 +28,9 @@ def colorize_label(label)
   colorized_label = label
 
   if colorized_label.include?("prod")
-    colorized_label.gsub!("prod", "#{"prod".purple}")
+    colorized_label.gsub!("prod", "prod".purple)
   elsif colorized_label.include?("stag")
-    colorized_label.gsub!("stag", "#{"stag".yellow}")
+    colorized_label.gsub!("stag", "stag".yellow)
   end
 
   colorized_label.gsub!(/-([A-Za-z]+Stack)-/, "-\033[97;44;1m\\1\033[0m-") if colorized_label.match?(/-[A-Za-z]+Stack-/)
