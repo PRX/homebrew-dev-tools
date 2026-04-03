@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-ruby "3.4.5"
+ruby file: ".tool-versions"
 
 gem "standard"
 gem "rake"
