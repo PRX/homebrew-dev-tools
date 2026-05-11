@@ -75,9 +75,9 @@ def connect_to_shared_task(env, name, type = nil, command = nil)
     puts "Connecting to a task for #{service_name.split("/").last.greenish}"
     puts
     if command
-      exec(%Q(aws ecs execute-command --region #{OPTS[:region]} --profile #{OPTS[:profile]} --cluster "#{cluster}" --task "#{tasks[0]}" --interactive --command "bin/application #{command}"))
+      exec(%(aws ecs execute-command --region #{OPTS[:region]} --profile #{OPTS[:profile]} --cluster "#{cluster}" --task "#{tasks[0]}" --interactive --command "bin/application #{command}"))
     else
-      exec(%Q(aws ecs execute-command --region #{OPTS[:region]} --profile #{OPTS[:profile]} --cluster "#{cluster}" --task "#{tasks[0]}" --interactive --command "/bin/bash"))
+      exec(%(aws ecs execute-command --region #{OPTS[:region]} --profile #{OPTS[:profile]} --cluster "#{cluster}" --task "#{tasks[0]}" --interactive --command "/bin/bash"))
     end
   end
 end
@@ -221,7 +221,6 @@ def show_wizard
     end
   end
 end
-
 
 if OPTS[:instance]
   # Connect directly to an instance if --instance is provided
