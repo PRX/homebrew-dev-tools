@@ -38,6 +38,50 @@ def colorize_label(label)
   colorized_label
 end
 
+def connect_to_shared_task(env, name, type = nil, command = nil)
+  ecs = Aws::ECS::Client.new(region: OPTS[:region], credentials: PrxRubyAwsCreds.client_credentials(OPTS[:profile]), retry_mode: "adaptive")
+
+  cluster = nil
+  ecs.list_clusters.find do |res|
+    cluster ||= res.cluster_arns.find { |arn| arn.include?("-Shared") && arn.include?("-#{env}") }
+  end
+  abort "Shared #{env} ECS cluster not found!".red unless cluster
+
+  services = ecs.list_services(cluster:).map do |resp|
+    resp.service_arns.select { |arn| arn.downcase.include?("-#{name.downcase}") }
+  end.flatten
+  abort "Service matching \"#{name}\" not found".red unless services.any?
+
+  service_name = nil
+  if type
+    service_name = services.find { |arn| arn.downcase.include?("-#{type.downcase}") }
+    abort "Service type \"#{type}\" not found".red unless service_name
+  else
+    service_name = services.find { |arn| arn.downcase.include?("-worker") } || services.first
+  end
+
+  tasks = ecs.list_tasks(cluster:, service_name:).task_arns.take(1)
+  abort "No running tasks for service".red unless tasks.any?
+
+  if command == "host"
+    container_instances = ecs.describe_tasks(cluster:, tasks:).tasks.map(&:container_instance_arn).take(1)
+    instance_id = ecs.describe_container_instances(cluster:, container_instances:).container_instances.first.ec2_instance_id
+    puts
+    puts "Connecting to EC2 instance #{instance_id.greenish}"
+    puts
+    exec("aws ssm start-session --target #{instance_id} --region #{OPTS[:region]} --profile #{OPTS[:profile]}")
+  else
+    puts
+    puts "Connecting to a task for #{service_name.split("/").last.greenish}"
+    puts
+    if command
+      exec(%Q(aws ecs execute-command --region #{OPTS[:region]} --profile #{OPTS[:profile]} --cluster "#{cluster}" --task "#{tasks[0]}" --interactive --command "bin/application #{command}"))
+    else
+      exec(%Q(aws ecs execute-command --region #{OPTS[:region]} --profile #{OPTS[:profile]} --cluster "#{cluster}" --task "#{tasks[0]}" --interactive --command "/bin/bash"))
+    end
+  end
+end
+
 def show_wizard
   puts
   puts "-------------------------------------------------------------"
@@ -178,9 +222,14 @@ def show_wizard
   end
 end
 
+
 if OPTS[:instance]
   # Connect directly to an instance if --instance is provided
   exec("aws ssm start-session --target #{OPTS[:instance]} --region #{OPTS[:region]} --profile #{OPTS[:profile]}")
+elsif ["stag", "prod"].include?(ARGV[0]) && ["web", "worker"].include?(ARGV[2])
+  connect_to_shared_task(ARGV[0], ARGV[1], ARGV[2], ARGV[3])
+elsif ["stag", "prod"].include?(ARGV[0])
+  connect_to_shared_task(ARGV[0], ARGV[1], nil, ARGV[2])
 else
   # Otherwise, show the wizard
   show_wizard
