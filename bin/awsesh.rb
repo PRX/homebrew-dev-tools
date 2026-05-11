@@ -14,15 +14,19 @@ gemfile do
   gem "prx-ruby-aws-creds"
 end
 
-OPTS = Slop.parse do |o|
-  o.string "--profile", "AWS profile", default: "prx-legacy"
-  o.string "--region", 'Region (e.g., "us-east-1")', default: "us-east-1"
-  o.string "-i", "--instance", "Instance ID (e.g., i-06d0f11e24baaddg7)"
-  o.on "-h", "--help" do
-    puts o
-    exit
-  end
+opts = Slop::Options.new
+opts.banner = "usage:"
+opts.separator "  awsesh [options]"
+opts.separator "  awsesh stag|prod service command [options]"
+opts.separator "  awsesh stag|prod service web|worker command [options]"
+opts.string "--profile", "AWS profile", default: "prx-legacy"
+opts.string "--region", 'Region (e.g., "us-east-1")', default: "us-east-1"
+opts.string "-i", "--instance", "Instance ID (e.g., i-06d0f11e24baaddg7)"
+opts.on "-h", "--help" do
+  puts opts
+  exit
 end
+OPTS = Slop::Parser.new(opts).parse(ARGV)
 
 def colorize_label(label)
   colorized_label = label
