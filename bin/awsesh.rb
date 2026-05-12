@@ -52,7 +52,13 @@ def connect_to_shared_task(env, name, type = nil, command = nil)
   abort "Shared #{env} ECS cluster not found!".red unless cluster
 
   services = ecs.list_services(cluster:).map do |resp|
-    resp.service_arns.select { |arn| arn.downcase.include?("-#{name.downcase}") }
+    resp.service_arns.select do |arn|
+      if name.downcase.start_with?("router")
+        arn.downcase.include?("-dovetail#{name.downcase}")
+      else
+        arn.downcase.include?("-#{name.downcase}")
+      end
+    end
   end.flatten
   abort "Service matching \"#{name}\" not found".red unless services.any?
 
