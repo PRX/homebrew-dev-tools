@@ -18,7 +18,7 @@ jobs:
           # Get the tag version (e.g., "v1.2.3") from the environment
           tag=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
 
-          # Get just the numberical version number
+          # Get just the numerical version number
           semver=$(echo $tag | sed "s/v//")
 
           # Need an local Git repository so we can commit changes
@@ -36,7 +36,7 @@ jobs:
           git push
 
       - name: Publish gem
-        uses: cadwallion/publish-rubygems-action@master
+        uses: cadwallion/publish-rubygems-action@94a6f4cd5350581749c569b5001eecc864e3ad0b
         env:
           RUBYGEMS_API_KEY: ${{secrets.RUBY_GEMS_PUSH_API_KEY}}
           WORKDIR: lib/prx-ruby-aws-creds
