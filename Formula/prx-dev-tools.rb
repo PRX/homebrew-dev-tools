@@ -7,7 +7,7 @@ class PrxDevTools < Formula
 
   def install
     bin.install "bin/awsesh.rb" => "awsesh"
-    bin.install "bin/awssh"
+    bin.install "bin/awsesh.rb" => "awssh"
     bin.install "bin/awsso.rb" => "awsso"
     bin.install "bin/awstunnel"
     bin.install "bin/prx-cfn-tree.rb" => "prx-cfn-tree"
