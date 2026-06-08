@@ -26,21 +26,27 @@ fi
 echo "Connecting to $JUMP_HOST..."
 
 # get env, and check for host key failure (jump servers can cycle out)
-OUT=`ssh $SSH_USER@$JUMP_HOST $SSH_OPTS 'printenv | grep ^PRX_' 2>&1`
-if [[ $? != 0 ]]; then
-  if [[ $OUT =~ "Host key verification failed" ]]; then
+ERR=$(mktemp)
+trap 'rm -f "$ERR"' EXIT
+OUT=$(ssh $SSH_USER@$JUMP_HOST $SSH_OPTS 'printenv | grep ^PRX_' 2>"$ERR")
+STATUS=$?
+if [[ $STATUS != 0 ]]; then
+  if grep -q "Host key verification failed" "$ERR"; then
     echo "Removing stale known_hosts for $JUMP_HOST..."
     ssh-keygen -R $JUMP_HOST > /dev/null
 
     echo "Reconnecting to $JUMP_HOST..."
-    OUT=`ssh $SSH_USER@$JUMP_HOST $SSH_OPTS 'printenv | grep ^PRX_'`
-    if [[ $? != 0 ]]; then exit 1; fi
+    OUT=$(ssh $SSH_USER@$JUMP_HOST $SSH_OPTS 'printenv | grep ^PRX_' 2>"$ERR")
+    if [[ $? != 0 ]]; then cat "$ERR" >&2; exit 1; fi
   else
-    echo $OUT
+    cat "$ERR" >&2
     exit 1
   fi
 fi
-export xargs $OUT
+cat "$ERR" >&2
+while IFS= read -r LINE; do
+  [[ $LINE =~ ^PRX_[A-Za-z0-9_]*= ]] && export "$LINE"
+done <<< "$OUT"
 
 # TODO: do we care to vary local ports by env/region?
 if [[ $ENV == "prod" ]]; then
