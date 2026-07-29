@@ -17,7 +17,7 @@ end
 
 OPTS = Slop.parse do |o|
   o.string "--regions", 'Regions (e.g., "us-east-1,us-west-2")', default: "us-east-1,us-east-2,us-west-2"
-  o.string "--data-account-profiles", 'Profiles to look for resources (e.g., "prx-legacay,prx-data-staging")', default: "prx-legacy,prx-data-staging,prx-data-production"
+  o.string "--data-account-profiles", 'Profiles to look for resources (e.g., "prx-legacay,prx-data-staging")', default: "prx-legacy,prx-data-staging,prx-data-production,prx-theworld"
   o.on "-h", "--help" do
     exit
   end
@@ -183,3 +183,8 @@ ec_instances.each do |instance|
 end
 
 puts Terminal::Table.new headings: headings, rows: rows
+puts
+puts "The following reservations did not apply to any instances in #{OPTS[:data_account_profiles].split(",").join(", ")}".yellow
+puts
+puts expanded_rds_reservations
+puts expanded_ec_reservations
