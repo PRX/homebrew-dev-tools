@@ -11,7 +11,7 @@ jobs:
   publish_gem:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
 
       - name: Update gemspec version
         run: |
@@ -36,7 +36,7 @@ jobs:
           git push
 
       - name: Publish gem
-        uses: cadwallion/publish-rubygems-action@94a6f4cd5350581749c569b5001eecc864e3ad0b
+        uses: cadwallion/publish-rubygems-action@v1.1.0
         env:
           RUBYGEMS_API_KEY: ${{secrets.RUBY_GEMS_PUSH_API_KEY}}
           WORKDIR: lib/prx-ruby-aws-creds
